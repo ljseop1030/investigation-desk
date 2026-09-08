@@ -1,0 +1,29 @@
+## 환경 및 언어
+
+# env
+.env
+.env.*
+!.env.example
+
+# 의존성
+node_modules/
+
+# build
+dist/
+build/
+.vercel/
+
+# log
+*.log
+npm-debug.log*
+
+# 에디터 · OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+## 개발 내용 관련
+notes/
+prototype/
+contents/
