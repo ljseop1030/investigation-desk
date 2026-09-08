@@ -4,23 +4,25 @@
 
 담당자들은 각자의 속도로 답한다. 바로 답하는 사람, 12분 뒤에 답하는 사람, 소관이 아니라며 끊는 사람. 기다리는 시간도 업무의 일부다.
 
-> 등장하는 인물·사건·기관은 모두 허구입니다.
+> 확인되지 않은 항목은 공란으로 두지 말고 담당자에게 확인한다.
+
+등장하는 인물·사건·기관은 모두 허구입니다.
 
 ---
 
 ## 프로젝트 구조
 
 ```
+content/ — 사건, 문서, 양식, 캐릭터 (저장소에 없음)
 client/
-  content/     사건, 문서, 양식, 캐릭터
-  core/        게임 로직. DOM과 fetch를 모른다
-  adapters/    저장소, AI, 시계
-  ui/          DOM
-server/        /api/chat, 채점, 세션
-shared/        양쪽이 함께 쓰는 id
+  content-loader.js
+  core/ — 게임 로직. DOM과 fetch를 모른다
+  adapters/ — 저장소, AI, 시계
+  ui/ — DOM
+server/ — /api/chat, 채점, 세션
+shared/ — enums. 코드가 쓰는 어휘
 ```
-
-실제 시나리오 데이터(`content/`)는 저장소에 없다. clone 시 `content.example/`로 fallback한다.
+실제 시나리오 데이터(`content/`)는 저장소에 없다. 뭐가 어디 있는지 모르는 게 이 게임의 절반이라서.
 
 ---
 
@@ -29,7 +31,7 @@ shared/        양쪽이 함께 쓰는 id
 **기반**
 - [x] Prototype 시뮬레이션 (vibe code)
 - [x] P0 깃허브 저장소
-- [ ] P1 콘텐츠 분리
+- [x] P1 콘텐츠 분리
 - [ ] P2 core + 테스트 + CI
 - [ ] P3 UI
 
