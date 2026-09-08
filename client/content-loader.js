@@ -7,7 +7,7 @@ const collectFlat = (glob) => collect(glob).flat();
 export const cases      = collect(import.meta.glob('../content/cases/*/case.js', { eager: true }));
 export const polnetDocs = [
   ...collectFlat(import.meta.glob('../content/cases/*/polnet.js', { eager: true })),
-  ...collectFlat(import.meta.glob('../content/polnet.js', { eager: true })),
+  ...collectFlat(import.meta.glob('../content/cases/polnet.js', { eager: true })),
 ];
 export const records    = collectFlat(import.meta.glob('../content/cases/*/records.js', { eager: true }));
 export const forms      = collect(import.meta.glob('../content/cases/*/form.js', { eager: true }));
