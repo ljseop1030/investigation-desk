@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { C, SANS, MONO } from './style.js';
 import S from './strings.js';
-import { useScreen } from './screen.js';
 import { iconFor } from './icons.jsx';
 import { Window } from './Window.jsx';
 import { PostIt } from './PostIt.jsx';
@@ -9,8 +8,7 @@ import { DesktopIcon } from './DesktopIcon.jsx';
 import { Taskbar } from './Taskbar.jsx';
 
 // 창 안에 무엇을 그릴지는 renderApp이 정한다. Desktop은 배치만 안다.
-export function Desktop({ apps, notes: noteDefs, status, renderApp, onReset }) {
-  const sc = useScreen({ apps, notes: noteDefs });
+export function Desktop({ apps, status, screen: sc, renderApp, onReset }) {
   const [selIcon, setSelIcon] = useState(null);
 
   return (
@@ -60,7 +58,7 @@ export function Desktop({ apps, notes: noteDefs, status, renderApp, onReset }) {
 
       {sc.notes.map((n, i) => (
         <PostIt
-          key={i}
+          key={n.id ?? i}
           note={n}
           z={n.z}
           onFocus={() => sc.raiseNote(i)}

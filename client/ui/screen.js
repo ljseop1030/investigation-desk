@@ -9,12 +9,7 @@ const initIcons = (apps) =>
   Object.fromEntries(apps.map((a, i) => [a.id, { x: 16, y: 16 + i * 96 }]));
 
 const initNotes = (notes) =>
-  notes.map((n, i) => ({
-    ...n,
-    r: n.r ?? [16, 30, 12, 26][i % 4],
-    y: n.y ?? [22, 99, 218, 320][i % 4],
-    z: 300 + i,
-  }));
+  notes.map((n, i) => ({ ...n, r: n.pos.r, y: n.pos.y, z: 300 + i }));
 
 export function useScreen({ apps, notes: noteDefs }) {
   const [wins, setWins] = useState([]);

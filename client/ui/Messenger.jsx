@@ -12,7 +12,7 @@ const clockStr = (ts) => {
 
 const has = (c, trait) => (c.traits ?? []).includes(trait);
 
-export function Messenger() {
+export function Messenger({ chatRequest, watching }) {
   const { content, actions, chats, typing, seenAt, outsider } = useGame();
 
   // 최근 연락순. 대화가 없는 사람은 뒤로, 그 안에서는 콘텐츠 순서.
@@ -37,7 +37,20 @@ export function Messenger() {
     return (chats[cid] ?? []).filter((m) => !m.me && m.at > since).length;
   };
 
-  // 보고 있는 대화는 계속 본 것으로 친다.
+  // 토스트에서 열면 그 대화로 옮긴다.
+  useEffect(() => {
+    if (chatRequest?.cid) setActive(chatRequest.cid);
+  }, [chatRequest]);
+
+  // 이 창이 떠 있는 동안만 '보고 있는 대화'다. 최소화하면 언마운트되며 지워진다.
+  useEffect(() => {
+    if (!watching) return;
+    watching.current = ch.id;
+    return () => {
+      watching.current = null;
+    };
+  }, [watching, ch.id]);
+
   useEffect(() => {
     actions.markSeen(ch.id);
   }, [actions, ch.id, log.length]);

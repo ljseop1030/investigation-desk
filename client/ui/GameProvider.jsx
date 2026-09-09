@@ -8,7 +8,7 @@ export const useGame = () => useContext(Ctx);
 
 // core 구독은 여기 한 군데. setState는 events.on 콜백 안에서만 부른다.
 // 사용자 입력은 actions로 나가고 돌아오는 건 이벤트뿐이라 단방향이다.
-export function GameProvider({ actions, view, events, content, children }) {
+export function GameProvider({ actions, view, events, content, watching, children }) {
   const [toast, setToast] = useState(null);
   const [authed, setAuthed] = useState(() =>
     Object.fromEntries(content.apps.map((a) => [a.id, view.isAuthed(a.id)]))
@@ -86,6 +86,7 @@ export function GameProvider({ actions, view, events, content, children }) {
       events.on('message', (m) => {
         setChats((c) => ({ ...c, [m.cid]: [...(c[m.cid] ?? []), { ...m }] }));
         if (m.me || !m.last) return;
+        if (watching?.current === m.cid) return;   // 지금 보고 있는 대화면 조용히
         notify({ kind: 'msg', cid: m.cid, who: who(m.cid) });
       }),
 
@@ -108,7 +109,7 @@ export function GameProvider({ actions, view, events, content, children }) {
     ];
 
     return () => off.forEach((f) => f());
-  }, [events, content, notify]);
+  }, [events, content, notify, watching]);
 
   const value = useMemo(
     () => ({

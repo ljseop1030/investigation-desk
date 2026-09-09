@@ -11,13 +11,14 @@ import { createChatRules } from '../core/rules/chat.js';
 import { createRecordRules } from '../core/rules/records.js';
 import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
-import { GameProvider } from './ui/GameProvider.jsx';
-import { Desktop } from './ui/Desktop.jsx';
-import { AppFrame } from './ui/AppFrame.jsx';
-import { Toast } from './ui/Toast.jsx';
 import { createNoticeRules } from '../core/rules/notices.js';
+import { GameProvider } from './ui/GameProvider.jsx';
+import { Shell } from './ui/Shell.jsx';
 
 const TEMPO = 10;   // 개발 중 배속
+
+// 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 한다.
+const CHAT_APP = 'msg';
 
 const clock = createClock();
 const scheduler = createScheduler(clock);
@@ -46,14 +47,18 @@ setInterval(actions.tick, 1000);
 window.game = actions;
 window.view = view;
 
+// 지금 보고 있는 대화. ref로 두는 이유는 창을 옮겨 다니는 잦은 변화가
+// 구독을 다시 걸게 하지 않으려고.
+const watching = { current: null };
+
 createRoot(document.getElementById('root')).render(
-  <GameProvider actions={actions} view={view} events={events} content={content}>
-    <Desktop
+  <GameProvider actions={actions} view={view} events={events} content={content} watching={watching}>
+    <Shell
       apps={content.apps}
       notes={content.notes}
       status={{ ...content.terminal.boot, caseCount: content.cases.length }}
-      renderApp={(app) => <AppFrame app={app} />}
+      chatAppId={CHAT_APP}
+      watching={watching}
     />
-    <Toast />
   </GameProvider>
 );
