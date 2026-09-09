@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { C, SANS, MONO } from './style.js';
 import S from './strings.js';
-import { useScreen } from './screen.jsx';
+import { useScreen } from './screen.js';
 import { iconFor } from './icons.jsx';
 import { Window } from './Window.jsx';
 import { PostIt } from './PostIt.jsx';
