@@ -36,6 +36,23 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     scheduler.add('reply', replyAt, { cid });
   }
 
+  // 비밀번호가 포스트잇에 적혀 있다. 막는 게 아니라 대조를 한 군데 모으는 것.
+  function authenticate(appId, id, pw) {
+    const app = (content.apps ?? []).find((a) => a.id === appId);
+    if (!app || app.user !== id || app.pw !== pw) return false;
+    state.touch(clock.now());
+    p().authed[appId] = true;
+    events.emit('app:authed', { appId });
+    return true;
+  }
+
+  // touch()를 부르지 않는다. UI가 자동으로 부르는 함수라
+  // 유휴 시계가 되감기면 외부인이 영영 안 나타난다.
+  function markSeen(cid) {
+    p().seenAt[cid] = clock.now();
+    events.emit('chat:seen', { cid });
+  }
+
   function requestRecord(recordId, reason) {
     if (!records.canRequest(recordId, reason)) return false;
     const now = clock.now();
@@ -129,7 +146,6 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     }
 
     p().working[cid] = true;
-    events.emit('typing', { cid, on: true });
 
     let out;
     try {
@@ -140,7 +156,6 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     }
 
     p().working[cid] = false;
-    events.emit('typing', { cid, on: false });
 
     if (out.leak) burn('message');
     if (out.ghost || !out.messages?.length) return;
@@ -157,6 +172,26 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     );
   }
 
+    /* ---------- 입력 중 ---------- */
+
+  // 파생값이라 저장하지 않는다. tick마다 다시 센다.
+  // 켜지는 경우는 둘. LLM 응답을 기다리는 중이거나(working),
+  // 예약된 말풍선의 lead 구간에 들어왔거나. 뒤엣것이 김주원의 tailGap 연출이다.
+  let typingOn = new Set();
+
+  function syncTyping(now) {
+    const want = new Set();
+    for (const [cid, on] of Object.entries(p().working)) if (on) want.add(cid);
+    for (const e of scheduler.pending()) {
+      if (e.kind === 'push' && e.lead && now >= e.at - e.lead) want.add(e.cid);
+    }
+
+    // 바뀐 것만 알린다. 매초 같은 이벤트를 쏘면 UI가 매초 재렌더된다.
+    for (const cid of typingOn) if (!want.has(cid)) events.emit('typing', { cid, on: false });
+    for (const cid of want) if (!typingOn.has(cid)) events.emit('typing', { cid, on: true });
+    typingOn = want;
+  }
+
   function tick() {
     for (const e of scheduler.tick()) {
       if (e.delivers?.length) {
@@ -165,8 +200,10 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       }
       handlers[e.kind]?.(e);
     }
-    if (story.outsiderDue(p().lastActAt, clock.now())) summonOutsider();
+    const now = clock.now();
+    if (story.outsiderDue(p().lastActAt, now)) summonOutsider();
+    syncTyping(now);
   }
 
-  return { send, requestRecord, submitForm, tick, summonOutsider };
+  return { send, authenticate, markSeen, requestRecord, submitForm, tick, summonOutsider };
 }

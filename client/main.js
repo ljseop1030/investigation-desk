@@ -3,6 +3,7 @@ import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createScheduler } from '../core/scheduler.js';
 import { createState } from '../core/state.js';
+import { createView } from '../core/view.js'; 
 import { createEvents } from '../core/events.js';
 import { createActions } from '../core/actions.js';
 import { createChatRules } from '../core/rules/chat.js';
@@ -15,6 +16,7 @@ const TEMPO = 10;   // 개발 중 배속
 const clock = createClock();
 const scheduler = createScheduler(clock);
 const state = createState();
+const view = createView({ state, content });  
 const events = createEvents();
 
 const actions = createActions({

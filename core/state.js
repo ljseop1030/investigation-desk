@@ -12,6 +12,7 @@ const empty = () => ({
     working: {},      // { [cid]: bool }  LLM 호출 중
     turns: {},        // { [cid]: n }     대본 소비 인덱스
     authed: {},       // { polnet: true }
+    seenAt: {},       // { [cid]: ts } 뱃지는 파생값
     requested: [],
     unlocked: [],
     delivered: [],
