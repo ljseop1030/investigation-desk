@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 import { MONO } from './style.js';
 import S from './strings.js';
 
-// 보안 에이전트 로드부터는 다른 색. 문구를 늘리면 여기도 같이 옮겨야 한다.
-const ALERT_FROM = 7;
-
-export function Boot({ onDone }) {
+export function Boot({ boot, onDone }) {
   const [n, setN] = useState(0);
   const [fade, setFade] = useState(false);
+  const { lines, alertFrom } = boot;
 
   useEffect(() => {
     if (n < lines.length) {
@@ -41,7 +39,7 @@ export function Boot({ onDone }) {
       }}
     >
       {lines.slice(0, n).map((l, i) => (
-        <div key={i} style={{ color: i >= ALERT_FROM ? '#C98D74' : '#B9C6CD' }}>
+        <div key={i} style={{ color: i >= alertFrom ? '#C98D74' : '#B9C6CD' }}>
           {l}
         </div>
       ))}
