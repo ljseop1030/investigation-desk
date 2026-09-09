@@ -1,7 +1,7 @@
 import { TRAIT } from '../shared/enums.js';
 
 export function createActions({ content, state, scheduler, events, rules, clock, ai }) {
-  const { chat, records, forms, story } = rules;
+  const { chat, records, forms, story, notices } = rules;
   const charById = new Map(content.characters.map((c) => [c.id, c]));
   const formById = new Map(content.forms.map((f) => [f.id, f]));
   const p = () => state.progress();
@@ -39,7 +39,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
   // 비밀번호가 포스트잇에 적혀 있다. 막는 게 아니라 대조를 한 군데 모으는 것.
   function authenticate(appId, id, pw) {
     const app = (content.apps ?? []).find((a) => a.id === appId);
-    if (!app || app.user !== id || app.pw !== pw) return false;
+    if (!app || app.private?.user !== id || app.private?.pw !== pw) return false;
     state.touch(clock.now());
     p().authed[appId] = true;
     events.emit('app:authed', { appId });
@@ -88,11 +88,11 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     scheduler.cancel((e) => e.kind === 'reply' && e.cid === by);
     p().pending[by] = [];
     lines.forEach((l) => arrive(by, l.text, l.at, { last: l.last }));
-}
+  }
 
   function summonOutsider() {
     if (p().story.outsider !== 'hidden') return;
-    const { who, lines } = content.story.outsiderAppears;
+    const { who } = content.story.outsiderAppears;
     p().story.outsider = 'live';
     events.emit('character:appeared', { cid: who });
     story.outsiderLines(clock.now()).forEach((l) =>
@@ -112,6 +112,12 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       log(e.cid).push({ me: false, text: e.text, at: e.at });
       if (story.marksProvided(e.cid, e.text)) p().story.provided = true;
       events.emit('message', { cid: e.cid, me: false, text: e.text, at: e.at, last: e.last });
+    },
+
+    notice(e) {
+      log(e.cid).push({ me: false, text: e.text, at: e.at });
+      p().noticesSent.push(e.index);
+      events.emit('message', { cid: e.cid, me: false, text: e.text, at: e.at, last: true });
     },
 
     unlock(e) {
@@ -172,11 +178,9 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     );
   }
 
-    /* ---------- 입력 중 ---------- */
+  /* ---------- 입력 중 ---------- */
 
-  // 파생값이라 저장하지 않는다. tick마다 다시 센다.
-  // 켜지는 경우는 둘. LLM 응답을 기다리는 중이거나(working),
-  // 예약된 말풍선의 lead 구간에 들어왔거나. 뒤엣것이 김주원의 tailGap 연출이다.
+  // working(응답 대기)과 lead 구간 둘 다 켠다. 파생값이라 저장하지 않는다.
   let typingOn = new Set();
 
   function syncTyping(now) {
@@ -186,10 +190,25 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       if (e.kind === 'push' && e.lead && now >= e.at - e.lead) want.add(e.cid);
     }
 
-    // 바뀐 것만 알린다. 매초 같은 이벤트를 쏘면 UI가 매초 재렌더된다.
+    // 바뀐 것만. 매초 쏘면 UI가 매초 재렌더된다.
     for (const cid of typingOn) if (!want.has(cid)) events.emit('typing', { cid, on: false });
     for (const cid of want) if (!typingOn.has(cid)) events.emit('typing', { cid, on: true });
     typingOn = want;
+  }
+
+  /* ---------- 공지 ---------- */
+
+  // 하나가 도착해야 다음이 잡힌다. 큐에 쌓이지 않게.
+  function scheduleNotice(now) {
+    if (!notices?.from) return;
+    if (scheduler.has((e) => e.kind === 'notice')) return;
+    const next = notices.pick(p().noticesSent);
+    if (!next) return;
+    scheduler.add('notice', notices.nextAt(now), {
+      cid: notices.from,
+      text: next.text,
+      index: next.index,
+    });
   }
 
   function tick() {
@@ -202,6 +221,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     }
     const now = clock.now();
     if (story.outsiderDue(p().lastActAt, now)) summonOutsider();
+    scheduleNotice(now);
     syncTyping(now);
   }
 

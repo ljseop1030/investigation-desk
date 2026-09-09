@@ -19,6 +19,7 @@ const empty = () => ({
     forms: {},        // { [formId]: { values, status, marks } }
     story: { outsider: 'hidden', provided: false },
     lastActAt: 0,
+    noticesSent: [],  // 이미 도착한 공지 인덱스
   },
   scheduler: [],
   screen: {},         // 창·아이콘·포스트잇. UI가 알아서 채운다

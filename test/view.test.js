@@ -6,9 +6,9 @@ import { ACCESS } from '../shared/enums.js';
 
 const CONTENT = {
   records: [
-    { id: 'open-one', access: ACCESS.OPEN },
-    { id: 'locked-one', access: ACCESS.RESTRICTED },
-    { id: 'missing-one', access: ACCESS.UNREGISTERED, provider: 'yoo' },
+    { id: 'open-one', access: ACCESS.OPEN, body: '공개본' },
+    { id: 'locked-one', access: ACCESS.RESTRICTED, private: { body: '비밀' } },
+    { id: 'missing-one', access: ACCESS.UNREGISTERED, provider: 'yoo', private: { body: '감식결과' } },
   ],
 };
 
@@ -20,6 +20,7 @@ const setup = () => {
 test('처음부터 열려 있는 자료', () => {
   const { view } = setup();
   assert.equal(view.recordState('open-one'), RECORD.OPEN);
+  assert.equal(view.recordBody('open-one'), '공개본');
 });
 
 test('제한열람은 잠김 → 신청 → 열림', () => {
@@ -41,9 +42,29 @@ test('미등록 자료는 담당자가 올려야 보인다', () => {
   assert.equal(view.recordState('missing-one'), RECORD.OPEN);
 });
 
+test('열리기 전에는 본문을 주지 않는다', () => {
+  const { view, p } = setup();
+  assert.equal(view.recordBody('locked-one'), null);
+
+  p.requested.push('locked-one');
+  assert.equal(view.recordBody('locked-one'), null, '신청만으로는 안 열린다');
+
+  p.unlocked.push('locked-one');
+  assert.equal(view.recordBody('locked-one'), '비밀');
+});
+
+test('미등록 자료도 등록 전에는 주지 않는다', () => {
+  const { view, p } = setup();
+  assert.equal(view.recordBody('missing-one'), null);
+
+  p.delivered.push('missing-one');
+  assert.equal(view.recordBody('missing-one'), '감식결과');
+});
+
 test('없는 자료는 null', () => {
   const { view } = setup();
   assert.equal(view.recordState('없는거'), null);
+  assert.equal(view.recordBody('없는거'), null);
 });
 
 test('미확인은 본 시각 이후에 도착한 상대 말만 센다', () => {

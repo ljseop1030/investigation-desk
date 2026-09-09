@@ -8,11 +8,11 @@ export default {
     confirm: '확인',
     back: '뒤로',
     login: '로그인',
+    newGame: '처음부터',
   },
 
   landing: {
     continue: '이어서',
-    newGame: '처음부터',
     about: '게임 정보',
     noSave: '저장된 작업 없음',
     namePlaceholder: '사용자 이름',
@@ -35,7 +35,6 @@ export default {
 
   desktop: {
     hint: '바탕화면 아이콘을 두 번 눌러 실행하십시오.',
-    reset: '처음부터',
     resetConfirm: '저장된 진행 상황을 모두 지우고 처음부터 다시 시작합니다.',
     terminal: (tag) => `AUX TERMINAL ${tag} / 대여`,
     user: (name) => `USER ${name}`,
