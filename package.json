@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test \"**/*.test.js\"",
+    "check": "npm test"
   },
   "devDependencies": {
     "vite": "^8.2.2"
-  }
+  },
+  "engines": { "node": ">=22" }
 }
