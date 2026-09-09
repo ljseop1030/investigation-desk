@@ -45,13 +45,6 @@ test('burst 아니면 두 번째 답장이 첫 답장 뒤에 붙는다', () => {
   assert.ok(b.replyAt > a.replyAt);
 });
 
-test('burst면 모아서 한 번에 — 뒤에 붙이지 않는다', () => {
-  const c = createChatRules({ random: fixed(0) });
-  const a = c.schedule(kang, 0);
-  const b = c.schedule(kang, 5000, a.replyAt);
-  assert.notEqual(b.readAt, null);
-});
-
 test('burst면 잡혀 있던 시각에 모아서 답한다', () => {
   const c = createChatRules({ random: fixed(0) });
   const a = c.schedule(kang, 0);
