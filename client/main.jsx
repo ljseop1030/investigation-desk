@@ -12,6 +12,8 @@ import { createRecordRules } from '../core/rules/records.js';
 import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
 import { Desktop } from './ui/Desktop.jsx';
+import { GameProvider } from './ui/GameProvider.jsx';
+import { Toast } from './ui/Toast.jsx';
 
 const TEMPO = 10;   // 개발 중 배속
 
@@ -41,14 +43,17 @@ window.game = actions;
 window.view = view;
 
 createRoot(document.getElementById('root')).render(
-  <Desktop
-    apps={content.apps}
-    notes={content.notes}
-    status={{ assetTag: 'A-2211', caseCount: 3 }}
-    renderApp={(app) => (
-      <div style={{ padding: 20, fontSize: 13 }}>{app.title}</div>
-    )}
-  />
+  <GameProvider actions={actions} view={view} events={events} content={content}>
+    <Desktop
+      apps={content.apps}
+      notes={content.notes}
+      status={{ ...content.terminal.boot, caseCount: content.cases.length }}
+      renderApp={(app) => (
+        <div style={{ padding: 20, fontSize: 13 }}>{app.title}</div>
+      )}
+    />
+    <Toast />
+  </GameProvider>
 );
 
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
