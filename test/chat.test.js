@@ -33,3 +33,21 @@ test('tailGap이 있으면 두 번째 말풍선만 벌어진다', () => {
   assert.equal(b[1].at - b[0].at, 150000);
   assert.equal(b[1].lead, 6000);
 });
+
+const kim = { read: [20, 60], reply: [20, 50], burst: false, burstWait: 0, tailGap: 150 };
+
+test('burst 아니면 두 번째 답장이 첫 답장 뒤에 붙는다', () => {
+  const c = createChatRules({ random: fixed(0) });
+  const a = c.schedule(kim, 0);
+  const b = c.schedule(kim, 5000, a.replyAt);
+  assert.equal(b.readAt, null);
+  assert.equal(b.replyAt, a.replyAt + 20000);
+  assert.ok(b.replyAt > a.replyAt);
+});
+
+test('burst면 모아서 한 번에 — 뒤에 붙이지 않는다', () => {
+  const c = createChatRules({ random: fixed(0) });
+  const a = c.schedule(kang, 0);
+  const b = c.schedule(kang, 5000, a.replyAt);
+  assert.notEqual(b.readAt, null);
+});
