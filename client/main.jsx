@@ -32,6 +32,23 @@ const actions = createActions({
   ai: { reply: async () => { throw new Error('no ai yet'); } },
 });
 
+setInterval(actions.tick, 1000);
+
+// 콘솔에서 직접 쳐볼 수 있게
+window.game = actions;
+window.view = view;
+
+createRoot(document.getElementById('root')).render(
+  <Desktop
+    apps={content.apps}
+    notes={content.notes}
+    status={{ assetTag: 'A-2211', caseCount: 3 }}
+    renderApp={(app) => (
+      <div style={{ padding: 20, fontSize: 13 }}>{app.title}</div>
+    )}
+  />
+);
+
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
 setInterval(actions.tick, 1000);
 
