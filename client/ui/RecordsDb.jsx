@@ -7,7 +7,7 @@ import { useGame } from './GameProvider.jsx';
 const MARK = { [RECORD.MISSING]: '· ', [RECORD.LOCKED]: '🔒 ', [RECORD.PENDING]: '🔒 ' };
 
 export function RecordsDb() {
-  const { content, actions, recordStates } = useGame();
+  const { content, actions, view, recordStates } = useGame();
   const records = content.records;
 
   const [sel, setSel] = useState(records[0]?.id);
@@ -15,7 +15,7 @@ export function RecordsDb() {
 
   const doc = records.find((r) => r.id === sel) ?? records[0];
   const st = recordStates[doc.id];
-  const cats = [...new Set(records.map((r) => r.cat))];
+  const cats = [...new Set(records.map((r) => r.category))];
 
   const request = () => {
     if (why.trim().length < 5) return;
@@ -34,7 +34,7 @@ export function RecordsDb() {
           <div key={cat}>
             <div style={{ padding: '8px 10px 4px', fontSize: 11, color: C.inkSoft }}>{cat}</div>
             {records
-              .filter((r) => r.cat === cat)
+              .filter((r) => r.category === cat)
               .map((r) => (
                 <button
                   key={r.id}
@@ -67,7 +67,7 @@ export function RecordsDb() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         <div style={{ fontSize: 15, marginBottom: 2 }}>{doc.title}</div>
         <div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 14 }}>
-          {doc.cat} {S.db.categorySuffix}
+          {doc.category} {S.db.categorySuffix}
         </div>
 
         {st === RECORD.MISSING && (
@@ -86,7 +86,7 @@ export function RecordsDb() {
 
         {st === RECORD.OPEN && (
           <pre style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.9, whiteSpace: 'pre-wrap', margin: 0 }}>
-            {doc.body}
+            {view.recordBody(doc.id)}
           </pre>
         )}
 

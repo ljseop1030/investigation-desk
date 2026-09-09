@@ -14,6 +14,17 @@ export function createView({ state, content }) {
   const recordById = new Map(content.records.map((r) => [r.id, r]));
   const clone = (v) => structuredClone(v);
 
+  const stateOf = (recordId) => {
+    const r = recordById.get(recordId);
+    if (!r) return null;
+    if (r.access === ACCESS.OPEN) return RECORD.OPEN;
+    if (r.access === ACCESS.UNREGISTERED) {
+      return p().delivered.includes(recordId) ? RECORD.OPEN : RECORD.MISSING;
+    }
+    if (p().unlocked.includes(recordId)) return RECORD.OPEN;
+    return p().requested.includes(recordId) ? RECORD.PENDING : RECORD.LOCKED;
+  };
+
   return {
     player: () => clone(state.get().player),
 
@@ -29,15 +40,13 @@ export function createView({ state, content }) {
 
     isAuthed: (appId) => !!p().authed[appId],
 
-    recordState(recordId) {
+    recordState: stateOf,
+
+    // 열려 있을 때만 준다. UI가 private을 직접 들여다보지 않게.
+    recordBody(recordId) {
+      if (stateOf(recordId) !== RECORD.OPEN) return null;
       const r = recordById.get(recordId);
-      if (!r) return null;
-      if (r.access === ACCESS.OPEN) return RECORD.OPEN;
-      if (r.access === ACCESS.UNREGISTERED) {
-        return p().delivered.includes(recordId) ? RECORD.OPEN : RECORD.MISSING;
-      }
-      if (p().unlocked.includes(recordId)) return RECORD.OPEN;
-      return p().requested.includes(recordId) ? RECORD.PENDING : RECORD.LOCKED;
+      return r.private?.body ?? r.body ?? null;
     },
 
     form: (formId) => clone(p().forms[formId] ?? null),
