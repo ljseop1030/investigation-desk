@@ -8,8 +8,9 @@ import { DesktopIcon } from './DesktopIcon.jsx';
 import { Taskbar } from './Taskbar.jsx';
 
 // 창 안에 무엇을 그릴지는 renderApp이 정한다. Desktop은 배치만 안다.
-export function Desktop({ apps, status, screen: sc, renderApp, onReset }) {
+export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset }) {
   const [selIcon, setSelIcon] = useState(null);
+  const shown = icons ?? apps;
 
   return (
     <div
@@ -25,7 +26,7 @@ export function Desktop({ apps, status, screen: sc, renderApp, onReset }) {
         onMouseDown={(e) => e.target === e.currentTarget && setSelIcon(null)}
         style={{ position: 'absolute', inset: 0 }}
       >
-        {apps.map((a) => (
+        {shown.map((a) => (
           <DesktopIcon
             key={a.id}
             app={{ ...a, icon: iconFor(a.id) }}

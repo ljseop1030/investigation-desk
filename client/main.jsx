@@ -1,4 +1,5 @@
 // 임시. P3에서 재수정
+import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
@@ -13,6 +14,8 @@ import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
 import { createNoticeRules } from '../core/rules/notices.js';
 import { GameProvider } from './ui/GameProvider.jsx';
+import { Boot } from './ui/Boot.jsx';
+import { Landing } from './ui/Landing.jsx';
 import { Shell } from './ui/Shell.jsx';
 
 const TEMPO = 10;   // 개발 중 배속
@@ -51,14 +54,42 @@ window.view = view;
 // 구독을 다시 걸게 하지 않으려고.
 const watching = { current: null };
 
-createRoot(document.getElementById('root')).render(
-  <GameProvider actions={actions} view={view} events={events} content={content} watching={watching}>
+// landing → boot → desk
+function Game() {
+  const [phase, setPhase] = useState('landing');
+  const [name, setName] = useState('');
+
+  if (phase === 'landing') {
+    return (
+      <Landing
+        terminal={content.terminal}
+        name={name}
+        setName={setName}
+        hasSave={false}
+        onContinue={() => setPhase('boot')}
+        onNew={() => setPhase('boot')}
+      />
+    );
+  }
+
+  if (phase === 'boot') {
+    return <Boot boot={content.terminal.boot} onDone={() => setPhase('desk')} />;
+  }
+
+  return (
     <Shell
       apps={content.apps}
       notes={content.notes}
-      status={{ ...content.terminal.boot, caseCount: content.cases.length }}
+      status={{ ...content.terminal.boot, caseCount: content.cases.length, user: name }}
+      terminal={content.terminal}
       chatAppId={CHAT_APP}
       watching={watching}
     />
+  );
+}
+
+createRoot(document.getElementById('root')).render(
+  <GameProvider actions={actions} view={view} events={events} content={content} watching={watching}>
+    <Game />
   </GameProvider>
 );
