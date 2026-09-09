@@ -13,14 +13,18 @@
 ## 프로젝트 구조
 
 ```
-content/ — 사건, 문서, 양식, 캐릭터 (저장소에 없음)
-client/
+content/          사건, 문서, 양식, 캐릭터 (저장소에 없음)
+client/           브라우저 진입점과 화면
+  main.js           조립 지점. 여기만 전 층을 안다
   content-loader.js
-  core/ — 게임 로직. DOM과 fetch를 모른다
-  adapters/ — 저장소, AI, 시계
-  ui/ — DOM
-server/ — /api/chat, 채점, 세션
-shared/ — enums. 코드가 쓰는 어휘
+  ui/               DOM
+core/             게임 로직. DOM과 fetch를 모른다
+  scheduler.js      절대시각 큐
+  state.js  actions.js  events.js
+  rules/            chat · records · forms · story
+adapters/         플랫폼 경계. 시계, 저장소, AI
+server/           /api/chat, 채점, 세션
+shared/           enums. 코드가 쓰는 어휘
 ```
 실제 시나리오 데이터(`content/`)는 저장소에 없다. 뭐가 어디 있는지 모르는 게 이 게임의 절반이라서.
 
