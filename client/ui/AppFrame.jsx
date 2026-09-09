@@ -1,5 +1,6 @@
 import { useGame } from './GameProvider.jsx';
 import { LoginGate } from './LoginGate.jsx';
+import { Polnet } from './Polnet.jsx';
 import { RecordsDb } from './RecordsDb.jsx';
 import { Collector } from './Collector.jsx';
 import { Messenger } from './Messenger.jsx';
@@ -12,6 +13,7 @@ export function AppFrame({ app }) {
     return <LoginGate app={app} onSubmit={(u, p) => actions.authenticate(app.id, u, p)} />;
   }
 
+  if (app.id === 'polnet') return <Polnet />;
   if (app.id === 'db') return <RecordsDb />;
   if (app.id === 'form') return <Collector />;
   if (app.id === 'msg') return <Messenger />;
