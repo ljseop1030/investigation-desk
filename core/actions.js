@@ -67,8 +67,11 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     events.emit('character:burned', { cid: burnId });
 
     const { by, lines } = story.confrontLines(how, clock.now());
+    // 추궁이 시작되면 그 대화에 걸려 있던 평범한 답장은 취소한다.
+    scheduler.cancel((e) => e.kind === 'reply' && e.cid === by);
+    p().pending[by] = [];
     lines.forEach((l) => arrive(by, l.text, l.at, { last: l.last }));
-  }
+}
 
   function summonOutsider() {
     if (p().story.outsider !== 'hidden') return;
