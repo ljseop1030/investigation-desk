@@ -1,5 +1,5 @@
-import { C, SANS, btnWin } from './tokens.js';
-import { startDrag } from './useDrag.js';
+import { C, SANS, btnWin } from './style.js';
+import { startDrag } from './drag.js';
 
 // z는 부모가 배열로 들고 있는다. 창이 자기 z를 가지면 '맨 앞으로'를 계산할 수 없다.
 export function Window({ win, focused, onFocus, onClose, onMin, onDrag, onResize, children }) {

@@ -1,4 +1,5 @@
 // 임시. P3에서 재수정
+import { createRoot } from 'react-dom/client';
 import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createScheduler } from '../core/scheduler.js';
@@ -10,6 +11,7 @@ import { createChatRules } from '../core/rules/chat.js';
 import { createRecordRules } from '../core/rules/records.js';
 import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
+import { Desktop } from './ui/Desktop.jsx';
 
 const TEMPO = 10;   // 개발 중 배속
 

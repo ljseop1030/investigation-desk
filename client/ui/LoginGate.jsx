@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { C, SANS, btnPrimary, loginInp } from './tokens.js';
+import { C, SANS, btnPrimary, loginInp } from './style.js';
 import S from './strings.js';
 
 const MAX_TRIES = 5;

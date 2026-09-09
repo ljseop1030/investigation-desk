@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MONO } from './tokens.js';
+import { MONO } from './style.js';
 import S from './strings.js';
 
 // 보안 에이전트 로드부터는 다른 색. 문구를 늘리면 여기도 같이 옮겨야 한다.

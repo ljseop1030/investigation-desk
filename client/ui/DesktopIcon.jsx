@@ -1,6 +1,6 @@
 import { useRef } from 'react';
-import { SANS } from './tokens.js';
-import { startDrag } from './useDrag.js';
+import { SANS } from './style.js';
+import { startDrag } from './drag.js';
 
 export function DesktopIcon({ app, pos, selected, onSelect, onOpen, onMove }) {
   const last = useRef(0);
