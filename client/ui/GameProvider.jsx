@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { RECORD } from '../../core/view.js';
+import { STATUS } from '../../shared/enums.js';
 import S from './strings.js';
 
 const Ctx = createContext(null);
@@ -14,6 +15,17 @@ export function GameProvider({ actions, view, events, content, children }) {
   );
   const [recordStates, setRecordStates] = useState(() =>
     Object.fromEntries(content.records.map((r) => [r.id, view.recordState(r.id)]))
+  );
+  const [formStates, setFormStates] = useState(() =>
+    Object.fromEntries(
+      content.forms.map((f) => {
+        const saved = view.form(f.id);
+        return [
+          f.id,
+          saved ? { status: saved.status, marks: saved.marks } : { status: STATUS.DRAFT, marks: null },
+        ];
+      })
+    )
   );
   const timer = useRef(null);
 
@@ -54,13 +66,18 @@ export function GameProvider({ actions, view, events, content, children }) {
         notify({ kind: 'sys', text: S.toast.dbRegistered(recordTitle(recordId)) });
       }),
 
-      events.on('form:graded', ({ formId, pass, bad }) =>
+      events.on('form:submitted', ({ formId }) =>
+        setFormStates((s) => ({ ...s, [formId]: { status: STATUS.REVIEW, marks: null } }))),
+
+      events.on('form:graded', ({ formId, pass, bad }) => {
+        setFormStates((s) => ({ ...s, [formId]: { status: STATUS.DONE, marks: { pass, bad } } }));
         notify({
           kind: 'sys',
           text: pass
             ? S.toast.formAccepted(formTitle(formId))
             : S.toast.formRejected(formTitle(formId), bad.length),
-        })),
+        });
+      }),
 
       // 말풍선 묶음의 마지막에만. 세 개 오면 세 번 뜬다.
       events.on('message', (m) => {
@@ -79,8 +96,8 @@ export function GameProvider({ actions, view, events, content, children }) {
   }, [events, content, notify]);
 
   const value = useMemo(
-    () => ({ actions, view, content, authed, recordStates, toast, notify, dismissToast }),
-    [actions, view, content, authed, recordStates, toast, notify, dismissToast]
+    () => ({ actions, view, content, authed, recordStates, formStates, toast, notify, dismissToast }),
+    [actions, view, content, authed, recordStates, formStates, toast, notify, dismissToast]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
