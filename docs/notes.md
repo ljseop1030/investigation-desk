@@ -11,7 +11,7 @@
 참조하고 있어 시나리오를 바꾸면 곳곳이 깨지는 구조였다.
 
 ```
-content/                      ← gitignore
+content/                      ← gitignor
   cases/{1187,1204,1215}/{case,polnet,records,form}.js
   characters/{baek,kang,yoo,kim,won,k,notice}.js
   screen/{apps,notes,org,terminal}.js
@@ -103,6 +103,7 @@ read: [min(8), min(20)]  →  read: [480, 1200]
 두었다. 워크플로를 추가한 PR이 첫 status check 대상이라, 코드가 섞여 있으면
 빨간불의 원인을 좁히기 어렵다.
 
+```
 core/ DOM·fetch를 import하지 않는다
 scheduler.js 절대시각 큐
 state.js 진행 상태
