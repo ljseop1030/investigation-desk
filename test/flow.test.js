@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createActions } from '../core/actions.js';
 import { createScheduler } from '../core/scheduler.js';
 import { createState } from '../core/state.js';
+import { createView } from '../core/view.js';
 import { createEvents } from '../core/events.js';
 import { createChatRules } from '../core/rules/chat.js';
 import { createRecordRules } from '../core/rules/records.js';
@@ -24,6 +25,11 @@ const CONTENT = {
       script: ['당신 업무는 제 관리관할이 아닙니다.', null],
       private: { fallback: ['.'] },
     },
+    {
+      id: 'kim', name: '김주원',
+      style: { read: [20, 20], reply: [20, 20], burst: false, burstWait: 0, bubbles: [2, 3], tailGap: 150 },
+      private: { fallback: ['이런 것까지 나한테 물어봐요?'] },
+    },
   ],
   records: [
     { id: '1187-victim', access: ACCESS.RESTRICTED },
@@ -42,6 +48,7 @@ const CONTENT = {
       },
     },
   },
+  apps: [{ id: 'polnet', user: 't-2211', pw: 'Pol!2211' }],
 };
 
 // idleSec 기본값을 크게 둬서 K가 끼어들지 않게 한다.
@@ -58,9 +65,12 @@ const setup = ({ reply, idleSec = 999999 } = {}) => {
   const clock = fakeClock(0);
   const scheduler = createScheduler(clock);
   const state = createState();
+  const view = createView({ state, content });
   const events = createEvents();
   const seen = [];
+  const typing = []; 
   events.on('message', (m) => seen.push(m));
+  events.on('typing', (x) => typing.push(x)); 
 
   const actions = createActions({
     content, state, scheduler, events, clock,
@@ -77,7 +87,7 @@ const setup = ({ reply, idleSec = 999999 } = {}) => {
   const run = async (sec) => {
     for (let i = 0; i < sec; i++) { clock.advance(1000); actions.tick(); await null; }
   };
-  return { actions, state, events, seen, clock, scheduler, run };
+  return { actions, state, view, events, seen, typing, clock, scheduler, run };
 };
 
 const replies = (seen) => seen.filter((m) => !m.me);
@@ -198,4 +208,93 @@ test('소각된 상대에게는 보낼 수 없다', async () => {
   const before = seen.length;
   actions.send('k', '아직 계세요?');
   assert.equal(seen.length, before);
+});
+
+/* ---------- 입력 중 ---------- */
+
+test('응답을 기다리는 동안 입력 중', async () => {
+  let release;
+  const { actions, typing, run } = setup({
+    reply: () => new Promise((r) => { release = () => r({ messages: ['조회 결과는 이겁니다'] }); }),
+  });
+
+  actions.send('kim', '차적 조회 부탁드립니다');
+  await run(41);
+  assert.deepEqual(typing.at(-1), { cid: 'kim', on: true });
+
+  release();
+  await run(2);
+  assert.deepEqual(typing.at(-1), { cid: 'kim', on: false });
+});
+
+test('tailGap 말풍선 앞에도 입력 중', async () => {
+  // 김주원: 첫 말풍선으로 튕기고 150초 뒤에 실제 답.
+  const { actions, typing, run } = setup({
+    reply: async () => ({ messages: ['이런 걸 왜 나한테', '조회 결과는 이겁니다'] }),
+  });
+
+  actions.send('kim', '차적 조회 부탁드립니다');
+  await run(150);
+  const base = typing.length;
+
+  await run(34);
+  assert.equal(typing.length, base, '아직 lead 구간 밖');
+
+  await run(2);
+  assert.deepEqual(typing.at(-1), { cid: 'kim', on: true });
+
+  await run(8);
+  assert.deepEqual(typing.at(-1), { cid: 'kim', on: false });
+});
+
+test('입력 중은 바뀔 때만 알린다', async () => {
+  const { actions, typing, run } = setup({
+    reply: async () => ({ messages: ['a', 'b'] }),
+  });
+  actions.send('kim', '조회 좀');
+  await run(220);
+
+  // 켜짐·꺼짐이 번갈아 나와야 한다. 같은 값이 연달으면 매초 쏘고 있는 것.
+  typing.forEach((t, i) => {
+    if (i) assert.notEqual(t.on, typing[i - 1].on, `${i}번째가 앞과 같다`);
+  });
+});
+
+/* ---------- 로그인 ---------- */
+
+test('비밀번호가 맞아야 로그인된다', () => {
+  const { actions, state } = setup();
+  assert.equal(actions.authenticate('polnet', 't-2211', '틀린값'), false);
+  assert.equal(state.progress().authed.polnet, undefined);
+
+  assert.equal(actions.authenticate('polnet', 't-2211', 'Pol!2211'), true);
+  assert.equal(state.progress().authed.polnet, true);
+});
+
+test('없는 앱은 로그인되지 않는다', () => {
+  const { actions, state } = setup();
+  assert.equal(actions.authenticate('없는앱', 'x', 'y'), false);
+  assert.deepEqual(state.progress().authed, {});
+});
+
+/* ---------- 미확인 ---------- */
+
+test('본 뒤에 온 것만 미확인으로 센다', async () => {
+  const { actions, view, run } = setup();
+  actions.send('kang', '자료 요청드립니다');
+  await run(700);
+  assert.equal(view.unread('kang'), 2, '내가 보낸 건 안 센다');
+
+  actions.markSeen('kang');
+  assert.equal(view.unread('kang'), 0);
+});
+
+test('markSeen은 유휴 시계를 되감지 않는다', async () => {
+  // 창을 열어둔 채 메시지가 오면 UI가 markSeen을 자동으로 부른다.
+  // 그때마다 lastActAt이 갱신되면 외부인이 영영 안 나타난다.
+  const { actions, state, run } = setup({ idleSec: 115 });
+  await run(110);
+  actions.markSeen('kang');
+  await run(8);
+  assert.equal(state.progress().story.outsider, 'live');
 });
