@@ -36,8 +36,8 @@ shared/           enums. 코드가 쓰는 어휘
 - [x] Prototype 시뮬레이션 (vibe code)
 - [x] P0 깃허브 저장소
 - [x] P1 콘텐츠 분리
-- [ ] P2 core + 테스트 + CI
-- [ ] P3 UI
+- [x] P2 core + 테스트 + CI
+- [x] P3 UI
 
 **개발 배포** — URL 하나. 혼자 쓴다.
 - [ ] P4 세이브 + 배포 파이프라인
