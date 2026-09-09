@@ -30,7 +30,7 @@ export default {
     failed: '아이디 또는 비밀번호가 올바르지 않습니다.',
     failedCount: (n, max) =>
       `아이디 또는 비밀번호가 올바르지 않습니다. (${n}/${max}회, ${max}회 실패 시 계정이 잠깁니다)`,
-    helpdesk: (ext) => `계정 문의는 서무 담당(내선 ${ext})`,
+    helpdesk: '계정 문의는 서무 담당(내선 3109)',
   },
 
   desktop: {

@@ -8,6 +8,9 @@ export const useGame = () => useContext(Ctx);
 // 사용자 입력은 actions로 나가고 돌아오는 건 이벤트뿐이라 단방향이다.
 export function GameProvider({ actions, view, events, content, children }) {
   const [toast, setToast] = useState(null);
+  const [authed, setAuthed] = useState(() =>
+    Object.fromEntries(content.apps.map((a) => [a.id, view.isAuthed(a.id)]))
+  );
   const timer = useRef(null);
 
   const notify = useCallback((t) => {
@@ -57,14 +60,17 @@ export function GameProvider({ actions, view, events, content, children }) {
 
       events.on('character:burned', () =>
         notify({ kind: 'sys', text: S.toast.contactNotFound })),
+
+      events.on('app:authed', ({ appId }) =>
+        setAuthed((a) => ({ ...a, [appId]: true }))),
     ];
 
     return () => off.forEach((f) => f());
   }, [events, content, notify]);
 
   const value = useMemo(
-    () => ({ actions, view, content, toast, notify, dismissToast }),
-    [actions, view, content, toast, notify, dismissToast]
+    () => ({ actions, view, content, authed, toast, notify, dismissToast }),
+    [actions, view, content, authed, toast, notify, dismissToast]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

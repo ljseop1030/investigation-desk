@@ -39,7 +39,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
   // 비밀번호가 포스트잇에 적혀 있다. 막는 게 아니라 대조를 한 군데 모으는 것.
   function authenticate(appId, id, pw) {
     const app = (content.apps ?? []).find((a) => a.id === appId);
-    if (!app || app.user !== id || app.pw !== pw) return false;
+    if (!app || app.private?.user !== id || app.private?.pw !== pw) return false;
     state.touch(clock.now());
     p().authed[appId] = true;
     events.emit('app:authed', { appId });

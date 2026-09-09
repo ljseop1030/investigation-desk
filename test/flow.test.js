@@ -48,7 +48,7 @@ const CONTENT = {
       },
     },
   },
-  apps: [{ id: 'polnet', user: 't-2211', pw: 'Pol!2211' }],
+  apps: [{ id: 'polnet', private: { user: 't-2211', pw: 'Pol!2211' } }],
 };
 
 // idleSec 기본값을 크게 둬서 K가 끼어들지 않게 한다.
