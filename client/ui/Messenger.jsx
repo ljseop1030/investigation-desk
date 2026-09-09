@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { TRAIT } from '../../shared/enums.js';
-import { C, SANS, btnPrimary } from './style.js';
 import S from './strings.js';
 import { useGame } from './GameProvider.jsx';
 
@@ -69,11 +68,9 @@ export function Messenger({ chatRequest, watching }) {
   };
 
   return (
-    <div style={{ display: 'flex', width: '100%', fontSize: 13 }}>
-      <div style={{ width: 174, borderRight: `1px solid ${C.line}`, background: '#EDEFF1', overflowY: 'auto' }}>
-        <div style={{ padding: '9px 12px', fontSize: 11, color: C.inkSoft, borderBottom: `1px solid ${C.line}` }}>
-          {content.TEAM}
-        </div>
+    <div className="split">
+      <div className="msg-roster">
+        <div className="msg-roster-head px">{content.TEAM}</div>
 
         {roster.map((c) => {
           const n = unread(c.id);
@@ -82,152 +79,59 @@ export function Messenger({ chatRequest, watching }) {
             <button
               key={c.id}
               onClick={() => setActive(c.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                width: '100%',
-                textAlign: 'left',
-                padding: '9px 10px',
-                border: 'none',
-                borderBottom: '1px solid #E2E5E8',
-                background: active === c.id ? '#fff' : n > 0 ? '#E4EAEE' : 'transparent',
-                cursor: 'pointer',
-                fontFamily: SANS,
-              }}
+              className={
+                'msg-person' + (active === c.id ? ' is-active' : '') + (n > 0 ? ' has-unread' : '')
+              }
             >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: c.tint,
-                  color: '#fff',
-                  fontSize: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
+              <div className="msg-avatar" style={{ background: c.tint }}>
                 {c.name[0]}
               </div>
 
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 12.5, fontWeight: n > 0 ? 700 : 400, color: gone ? C.hint : C.ink }}>
-                  {c.name} <span style={{ color: C.inkSoft, fontSize: 10.5 }}>{c.rank}</span>
+                <div className={`msg-person-name${gone ? ' is-gone' : ''}`}>
+                  {c.name} <span className="msg-person-rank">{c.rank}</span>
                 </div>
-                <div
-                  style={{
-                    fontSize: 10.5,
-                    color: C.inkSoft,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {c.role}
-                </div>
+                <div className="msg-person-role">{c.role}</div>
               </div>
 
-              {n > 0 && (
-                <span
-                  style={{
-                    background: '#C4452C',
-                    color: '#fff',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    minWidth: 18,
-                    height: 18,
-                    lineHeight: '18px',
-                    borderRadius: 9,
-                    textAlign: 'center',
-                    padding: '0 5px',
-                    flexShrink: 0,
-                  }}
-                >
-                  {n > 99 ? '99+' : n}
-                </span>
-              )}
+              {n > 0 && <span className="msg-badge">{n > 99 ? '99+' : n}</span>}
             </button>
           );
         })}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#DCE3E8' }}>
-        <div style={{ padding: '7px 12px', background: '#fff', borderBottom: `1px solid ${C.line}` }}>
-          <span style={{ fontSize: 13 }}>
+      <div className="msg-pane">
+        <div className="msg-head">
+          <span>
             {ch.name} {ch.rank}
           </span>
-          <span style={{ fontSize: 10.5, color: C.barDim, float: 'right', marginTop: 3 }}>{ch.tag}</span>
+          <span className="msg-head-tag">{ch.tag}</span>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+        <div className="msg-log">
           {log.map((m, i) => (
-            <div
-              key={i}
-              style={{ display: 'flex', justifyContent: m.me ? 'flex-end' : 'flex-start', marginBottom: 7 }}
-            >
+            <div key={i} className={`msg-row${m.me ? ' is-mine' : ''}`}>
               {m.me && (
-                <div
-                  style={{
-                    fontSize: 9.5,
-                    color: '#7B8A96',
-                    alignSelf: 'flex-end',
-                    marginRight: 5,
-                    textAlign: 'right',
-                  }}
-                >
-                  {!m.read && <div style={{ color: C.alert }}>1</div>}
+                <div className="msg-stamp">
+                  {!m.read && <div className="msg-unreadmark">1</div>}
                   <div>{clockStr(m.at)}</div>
                 </div>
               )}
 
-              <div
-                style={{
-                  maxWidth: '74%',
-                  background: m.me ? C.mine : '#fff',
-                  padding: '7px 11px',
-                  fontSize: 12.5,
-                  lineHeight: 1.65,
-                  whiteSpace: 'pre-wrap',
-                  borderRadius: 3,
-                  color: C.ink,
-                }}
-              >
-                {m.text}
-              </div>
+              <div className="msg-bubble">{m.text}</div>
 
-              {!m.me && (
-                <div style={{ fontSize: 9.5, color: '#7B8A96', alignSelf: 'flex-end', marginLeft: 5 }}>
-                  {clockStr(m.at)}
-                </div>
-              )}
+              {!m.me && <div className="msg-stamp">{clockStr(m.at)}</div>}
             </div>
           ))}
 
-          {typing[ch.id] && (
-            <div style={{ fontSize: 11, color: '#6E7B85', padding: '2px 4px' }}>{S.messenger.typing(ch.name)}</div>
-          )}
+          {typing[ch.id] && <div className="msg-typing">{S.messenger.typing(ch.name)}</div>}
           <div ref={end} />
         </div>
 
         {burned || broadcast ? (
-          <div
-            style={{
-              borderTop: `1px solid ${C.line}`,
-              background: '#F2F3F5',
-              padding: '16px 14px',
-              fontSize: 11.5,
-              color: C.inkSoft,
-              textAlign: 'center',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {burned ? S.messenger.burned : S.messenger.broadcastOnly}
-          </div>
+          <div className="msg-closed">{burned ? S.messenger.burned : S.messenger.broadcastOnly}</div>
         ) : (
-          <div style={{ display: 'flex', borderTop: `1px solid ${C.line}`, background: '#fff' }}>
+          <div className="msg-input">
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -238,18 +142,8 @@ export function Messenger({ chatRequest, watching }) {
                 }
               }}
               placeholder={S.messenger.inputPlaceholder}
-              style={{
-                flex: 1,
-                border: 'none',
-                outline: 'none',
-                padding: '10px 12px',
-                fontSize: 12.5,
-                fontFamily: SANS,
-                resize: 'none',
-                height: 52,
-              }}
             />
-            <button onClick={submit} style={{ ...btnPrimary, width: 62, height: 52 }}>
+            <button className="btn msg-send" onClick={submit}>
               {S.messenger.send}
             </button>
           </div>

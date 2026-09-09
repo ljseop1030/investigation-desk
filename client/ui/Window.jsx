@@ -1,7 +1,7 @@
-import { C, SANS, btnWin } from './style.js';
 import { startDrag } from './drag.js';
 
 // z는 부모가 배열로 들고 있는다. 창이 자기 z를 가지면 '맨 앞으로'를 계산할 수 없다.
+// 크기는 width/height를 직접 바꾼다. transform: scale을 쓰면 픽셀 폰트가 흐려진다.
 export function Window({ win, focused, onFocus, onClose, onMin, onDrag, onResize, children }) {
   const startMove = (e) => {
     onFocus();
@@ -21,60 +21,33 @@ export function Window({ win, focused, onFocus, onClose, onMin, onDrag, onResize
   return (
     <div
       onMouseDown={onFocus}
-      style={{
-        position: 'absolute',
-        left: win.x,
-        top: win.y,
-        width: win.w,
-        height: win.h,
-        zIndex: win.z,
-        background: C.chrome,
-        border: `1px solid ${focused ? C.bar : C.chromeEdge}`,
-        boxShadow: focused ? '0 12px 34px rgba(0,0,0,.45)' : '0 4px 14px rgba(0,0,0,.28)',
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: SANS,
-      }}
+      className={`win${focused ? ' is-focused' : ''}`}
+      style={{ left: win.x, top: win.y, width: win.w, height: win.h, zIndex: win.z }}
     >
-      <div
-        onMouseDown={startMove}
-        onTouchStart={startMove}
-        style={{
-          height: 30,
-          background: focused ? C.bar : C.barDim,
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 4px 0 10px',
-          cursor: 'move',
-          userSelect: 'none',
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 12.5 }}>{win.title}</span>
-        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+      <div className="win-bar px" onMouseDown={startMove} onTouchStart={startMove}>
+        <span className="win-title">{win.title}</span>
+        <div className="win-buttons">
           {onMin && (
-            <button onClick={onMin} style={btnWin}>
-              —
+            <button className="win-btn px" onClick={onMin} aria-label="최소화">
+              _
             </button>
           )}
-          <button onClick={onClose} style={{ ...btnWin, color: '#ffd9d0' }}>
-            ✕
+          <button className="win-btn px" onClick={onClose} aria-label="닫기">
+            ×
           </button>
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', background: C.paper }}>
-        {children}
-      </div>
+      <div className="win-body">{children}</div>
 
-      <div
-        onMouseDown={startResize}
-        onTouchStart={startResize}
-        style={{ position: 'absolute', right: 0, bottom: 0, width: 16, height: 16, cursor: 'nwse-resize' }}
-      >
-        <svg viewBox="0 0 16 16" width="16" height="16">
-          <path d="M15 6L6 15M15 11l-4 4" stroke={C.chromeEdge} strokeWidth="1.4" />
+      <div className="win-grip" onMouseDown={startResize} onTouchStart={startResize}>
+        <svg viewBox="0 0 16 16" width="16" height="16" shapeRendering="crispEdges" aria-hidden="true">
+          <rect x="11" y="11" width="2" height="2" fill="#5C666F" />
+          <rect x="8" y="11" width="2" height="2" fill="#5C666F" />
+          <rect x="11" y="8" width="2" height="2" fill="#5C666F" />
+          <rect x="5" y="11" width="2" height="2" fill="#8E979F" />
+          <rect x="11" y="5" width="2" height="2" fill="#8E979F" />
+          <rect x="8" y="8" width="2" height="2" fill="#8E979F" />
         </svg>
       </div>
     </div>
