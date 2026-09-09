@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { RECORD } from '../../core/view.js';
 import S from './strings.js';
 
 const Ctx = createContext(null);
@@ -10,6 +11,9 @@ export function GameProvider({ actions, view, events, content, children }) {
   const [toast, setToast] = useState(null);
   const [authed, setAuthed] = useState(() =>
     Object.fromEntries(content.apps.map((a) => [a.id, view.isAuthed(a.id)]))
+  );
+  const [recordStates, setRecordStates] = useState(() =>
+    Object.fromEntries(content.records.map((r) => [r.id, view.recordState(r.id)]))
   );
   const timer = useRef(null);
 
@@ -35,14 +39,20 @@ export function GameProvider({ actions, view, events, content, children }) {
     };
 
     const off = [
-      events.on('record:requested', () =>
-        notify({ kind: 'sys', text: S.toast.requestReceived })),
+      events.on('record:requested', ({ recordId }) => {
+        setRecordStates((s) => ({ ...s, [recordId]: RECORD.PENDING }));
+        notify({ kind: 'sys', text: S.toast.requestReceived });
+      }),
 
-      events.on('record:unlocked', ({ recordId }) =>
-        notify({ kind: 'sys', text: S.toast.dbApproved(recordTitle(recordId)) })),
+      events.on('record:unlocked', ({ recordId }) => {
+        setRecordStates((s) => ({ ...s, [recordId]: RECORD.OPEN }));
+        notify({ kind: 'sys', text: S.toast.dbApproved(recordTitle(recordId)) });
+      }),
 
-      events.on('record:registered', ({ recordId }) =>
-        notify({ kind: 'sys', text: S.toast.dbRegistered(recordTitle(recordId)) })),
+      events.on('record:registered', ({ recordId }) => {
+        setRecordStates((s) => ({ ...s, [recordId]: RECORD.OPEN }));
+        notify({ kind: 'sys', text: S.toast.dbRegistered(recordTitle(recordId)) });
+      }),
 
       events.on('form:graded', ({ formId, pass, bad }) =>
         notify({
@@ -69,8 +79,8 @@ export function GameProvider({ actions, view, events, content, children }) {
   }, [events, content, notify]);
 
   const value = useMemo(
-    () => ({ actions, view, content, authed, toast, notify, dismissToast }),
-    [actions, view, content, authed, toast, notify, dismissToast]
+    () => ({ actions, view, content, authed, recordStates, toast, notify, dismissToast }),
+    [actions, view, content, authed, recordStates, toast, notify, dismissToast]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
