@@ -2,6 +2,7 @@ import { useGame } from './GameProvider.jsx';
 import { LoginGate } from './LoginGate.jsx';
 import { RecordsDb } from './RecordsDb.jsx';
 import { Collector } from './Collector.jsx';
+import { Messenger } from './Messenger.jsx';
 
 // 창 하나의 내용물. 인증 전이면 로그인 화면.
 export function AppFrame({ app }) {
@@ -13,6 +14,7 @@ export function AppFrame({ app }) {
 
   if (app.id === 'db') return <RecordsDb />;
   if (app.id === 'form') return <Collector />;
+  if (app.id === 'msg') return <Messenger />;
 
   return <div style={{ padding: 20, fontSize: 13 }}>{app.title}</div>;
 }

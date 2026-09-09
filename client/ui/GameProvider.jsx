@@ -27,6 +27,10 @@ export function GameProvider({ actions, view, events, content, children }) {
       })
     )
   );
+  const [chats, setChats] = useState(() => view.chats());
+  const [typing, setTyping] = useState({});
+  const [seenAt, setSeenAt] = useState({});
+  const [outsider, setOutsider] = useState(() => view.outsider());
   const timer = useRef(null);
 
   const notify = useCallback((t) => {
@@ -79,14 +83,25 @@ export function GameProvider({ actions, view, events, content, children }) {
         });
       }),
 
-      // 말풍선 묶음의 마지막에만. 세 개 오면 세 번 뜬다.
       events.on('message', (m) => {
+        setChats((c) => ({ ...c, [m.cid]: [...(c[m.cid] ?? []), { ...m }] }));
         if (m.me || !m.last) return;
         notify({ kind: 'msg', cid: m.cid, who: who(m.cid) });
       }),
 
-      events.on('character:burned', () =>
-        notify({ kind: 'sys', text: S.toast.contactNotFound })),
+      events.on('read', ({ cid }) =>
+        setChats((c) => ({ ...c, [cid]: (c[cid] ?? []).map((m) => (m.me ? { ...m, read: true } : m)) }))),
+
+      events.on('typing', ({ cid, on }) => setTyping((t) => ({ ...t, [cid]: on }))),
+
+      events.on('chat:seen', ({ cid }) => setSeenAt((s) => ({ ...s, [cid]: Date.now() }))),
+
+      events.on('character:appeared', () => setOutsider('live')),
+
+      events.on('character:burned', () => {
+        setOutsider('burned');
+        notify({ kind: 'sys', text: S.toast.contactNotFound });
+      }),
 
       events.on('app:authed', ({ appId }) =>
         setAuthed((a) => ({ ...a, [appId]: true }))),
@@ -96,8 +111,13 @@ export function GameProvider({ actions, view, events, content, children }) {
   }, [events, content, notify]);
 
   const value = useMemo(
-    () => ({ actions, view, content, authed, recordStates, formStates, toast, notify, dismissToast }),
-    [actions, view, content, authed, recordStates, formStates, toast, notify, dismissToast]
+    () => ({
+      actions, view, content,
+      authed, recordStates, formStates,
+      chats, typing, seenAt, outsider,
+      toast, notify, dismissToast,
+    }),
+    [actions, view, content, authed, recordStates, formStates, chats, typing, seenAt, outsider, toast, notify, dismissToast]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
