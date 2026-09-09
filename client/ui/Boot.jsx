@@ -8,7 +8,6 @@ const ALERT_FROM = 7;
 export function Boot({ onDone }) {
   const [n, setN] = useState(0);
   const [fade, setFade] = useState(false);
-  const lines = S.boot.lines;
 
   useEffect(() => {
     if (n < lines.length) {

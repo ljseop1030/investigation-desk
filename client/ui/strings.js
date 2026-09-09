@@ -8,11 +8,11 @@ export default {
     confirm: '확인',
     back: '뒤로',
     login: '로그인',
+    newGame: '처음부터',
   },
 
   landing: {
     continue: '이어서',
-    newGame: '처음부터',
     about: '게임 정보',
     noSave: '저장된 작업 없음',
     namePlaceholder: '사용자 이름',
@@ -20,17 +20,6 @@ export default {
   },
 
   boot: {
-    lines: [
-      '경찰청 정보화장비정책관실 지급 단말',
-      'MODEL PL-14  /  자산번호 A-2211  /  대여',
-      '',
-      'Memory ......................... 16384MB  OK',
-      'Storage ....................... SSD 512GB  OK',
-      'Network ........... 원격업무망 연결됨 (VPN 확인)',
-      '',
-      '보안 에이전트 로드 중...',
-      '조회 이력 로깅이 활성화되었습니다.',
-    ],
     preparing: '바탕화면을 준비하는 중…',
     skip: '화면을 누르면 건너뜁니다',
   },
@@ -41,12 +30,11 @@ export default {
     failed: '아이디 또는 비밀번호가 올바르지 않습니다.',
     failedCount: (n, max) =>
       `아이디 또는 비밀번호가 올바르지 않습니다. (${n}/${max}회, ${max}회 실패 시 계정이 잠깁니다)`,
-    helpdesk: '계정 문의는 서무 담당(내선 3109)',
+    helpdesk: (ext) => `계정 문의는 서무 담당(내선 ${ext})`,
   },
 
   desktop: {
     hint: '바탕화면 아이콘을 두 번 눌러 실행하십시오.',
-    reset: '처음부터',
     resetConfirm: '저장된 진행 상황을 모두 지우고 처음부터 다시 시작합니다.',
     terminal: (tag) => `AUX TERMINAL ${tag} / 대여`,
     user: (name) => `USER ${name}`,
