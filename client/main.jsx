@@ -15,6 +15,7 @@ import { GameProvider } from './ui/GameProvider.jsx';
 import { Desktop } from './ui/Desktop.jsx';
 import { AppFrame } from './ui/AppFrame.jsx';
 import { Toast } from './ui/Toast.jsx';
+import { createNoticeRules } from '../core/rules/notices.js';
 
 const TEMPO = 10;   // 개발 중 배속
 
@@ -32,6 +33,7 @@ const actions = createActions({
     records: createRecordRules(content.records, { tempo: TEMPO }),
     forms: createFormRules({ tempo: TEMPO }),
     story: createStoryRules(content.story, content.characters),
+    notices: createNoticeRules(content.notices, content.characters, { tempo: TEMPO }),
   },
   // P5까지는 fallback 대사로 돈다
   ai: { reply: async () => { throw new Error('no ai yet'); } },
