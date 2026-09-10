@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import S from './strings.js';
+import { StartMenu } from './StartMenu.jsx';
 
-export function Taskbar({ wins, top, onFocus, onReset }) {
+export function Taskbar({ wins, top, onFocus, onRestart, onQuit }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -11,6 +12,8 @@ export function Taskbar({ wins, top, onFocus, onReset }) {
 
   return (
     <div className="taskbar px">
+      <StartMenu onRestart={onRestart} onQuit={onQuit} />
+
       {wins.length === 0 && <span className="tb-hint">{S.desktop.hint}</span>}
 
       {wins.map((w) => {
@@ -25,15 +28,6 @@ export function Taskbar({ wins, top, onFocus, onReset }) {
           </button>
         );
       })}
-
-      {onReset && (
-        <button
-          className="tb-item tb-reset px"
-          onClick={() => window.confirm(S.desktop.resetConfirm) && onReset()}
-        >
-          {S.common.newGame}
-        </button>
-      )}
 
       <div className="tb-clock px">
         {String(now.getHours()).padStart(2, '0')}:{String(now.getMinutes()).padStart(2, '0')}

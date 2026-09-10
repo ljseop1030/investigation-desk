@@ -8,7 +8,7 @@ import { DesktopIcon } from './DesktopIcon.jsx';
 import { Taskbar } from './Taskbar.jsx';
 
 // 창 안에 무엇을 그릴지는 renderApp이 정한다. Desktop은 배치만 안다.
-export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset }) {
+export function Desktop({ apps, icons, status, screen: sc, renderApp, onRestart, onQuit }) {
   const { content } = useGame();
   const [selIcon, setSelIcon] = useState(null);
   const shown = icons ?? apps;
@@ -65,7 +65,7 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
         </Window>
       ))}
 
-      <Taskbar wins={sc.wins} top={sc.top} onFocus={sc.focus} onReset={onReset} />
+      <Taskbar wins={sc.wins} top={sc.top} onFocus={sc.focus} onRestart={onRestart} onQuit={onQuit} />
     </div>
   );
 }

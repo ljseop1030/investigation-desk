@@ -17,6 +17,8 @@ export default {
     back: '뒤로',
     login: '로그인',
     newGame: '처음부터',
+    settings: '설정',
+    quit: '종료하기',
   },
 
   landing: {
@@ -43,7 +45,11 @@ export default {
 
   desktop: {
     hint: '바탕화면 아이콘을 두 번 눌러 실행하십시오.',
-    resetConfirm: '저장된 진행 상황을 모두 지우고 처음부터 다시 시작합니다.',
+    start: '시작',
+    // 확인 문구는 한 번 더 누르면 실행된다는 사실까지 문장 안에 담는다.
+    // 별도 안내를 옆에 붙이면 두 줄이 되고, 타자로 찍히는 맛이 죽는다.
+    resetConfirm: '저장된 진행 상황을 모두 지웁니다. 한 번 더 누르면 실행됩니다.',
+    quitConfirm: '작업을 저장하고 시작 화면으로 나갑니다. 한 번 더 누르면 실행됩니다.',
   },
 
   polnet: {

@@ -4,6 +4,7 @@ import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createLocalStorage } from '../adapters/storage/local.js';
 import { createAutosave } from './save.js';
+import { watchActivity } from './activity.js';
 import { createScheduler, restore } from '../core/scheduler.js';
 import { createState, SAVE_VERSION } from '../core/state.js';
 import { createView } from '../core/view.js';
@@ -31,6 +32,31 @@ const CHAT_APP = 'msg';
 
 const clock = createClock();
 const storage = createLocalStorage();
+
+// 게임 안에서 '처음부터'를 누르면 저장을 지우고 새로고침한다. 그러면 랜딩으로
+// 떨어지는데, 부팅부터 다시 보고 싶다는 요청이었다. 세이브(localStorage)는
+// 지워야 하고 이 표식은 남아야 해서 sessionStorage에 둔다. 탭을 닫으면 사라진다.
+const RESUME_KEY = 'investigation-desk:resume';
+
+const takeResume = () => {
+  try {
+    const v = sessionStorage.getItem(RESUME_KEY);
+    if (v !== null) sessionStorage.removeItem(RESUME_KEY);
+    return v;
+  } catch {
+    return null;   // 시크릿 모드 등. 표식이 없으면 랜딩으로 간다.
+  }
+};
+
+const markResume = (name) => {
+  try {
+    sessionStorage.setItem(RESUME_KEY, name ?? '');
+  } catch {
+    /* 못 남기면 랜딩으로 떨어질 뿐이다 */
+  }
+};
+
+const resumeName = takeResume();
 
 const saved = storage.load();
 const hasSave = saved?.v === SAVE_VERSION;
@@ -65,6 +91,9 @@ const actions = createActions({
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
 setInterval(actions.tick, 1000);
 
+// 유휴 판정의 기준. core가 모르는 조작(문서 읽기, 창 옮기기, 탭 복귀)까지 친다.
+watchActivity(actions.markActive);
+
 // 화면 배치를 걷어올 창구. Shell이 매 렌더마다 채운다.
 const screenRef = { current: null };
 
@@ -78,13 +107,27 @@ window.game = actions;
 window.view = view;
 window.save = autosave;   // save.flush(true) / save.bytes()
 
-// 저장을 지우고 처음부터. state와 scheduler가 모듈 최상단에서 한 번
-// 만들어지는 구조라, 새로고침이 setter를 하나씩 되돌리는 것보다 확실하다.
-// 버튼 위치와 방식은 나중에 바뀐다. 지우는 일은 여기 한 군데.
-function wipe() {
+// 부팅부터 다시. state와 scheduler가 모듈 최상단에서 한 번 만들어지는
+// 구조라, 새로고침이 setter를 하나씩 되돌리는 것보다 확실하다.
+// 이름은 들고 간다. 같은 사람이 다시 앉는 것이지 다른 사람이 오는 게 아니다.
+function restart(name) {
   autosave.stop();
   storage.clear();
+  markResume(name ?? state.get().player.name);
   location.reload();
+}
+
+// 저장하고 시작 화면으로. 세이브를 남기므로 '이어서'가 살아 있다.
+function quit() {
+  autosave.flush(true);
+  autosave.stop();
+  location.reload();
+}
+
+// 이어서 들어오는 길. 랜딩을 거치지 않으므로 여기서 채비를 끝낸다.
+if (resumeName !== null) {
+  state.setName(resumeName);
+  autosave.start();
 }
 
 // 지금 보고 있는 대화. ref로 두는 이유는 창을 옮겨 다니는 잦은 변화가
@@ -93,8 +136,8 @@ const watching = { current: null };
 
 // landing → boot → desk
 function Game() {
-  const [phase, setPhase] = useState('landing');
-  const [name, setName] = useState(saved?.player?.name ?? '');
+  const [phase, setPhase] = useState(resumeName === null ? 'landing' : 'boot');
+  const [name, setName] = useState(resumeName ?? saved?.player?.name ?? '');
 
   const enter = () => {
     state.setName(name);
@@ -102,10 +145,9 @@ function Game() {
     setPhase('boot');
   };
 
-  // '처음부터'는 두 가지 일이다. 지울 것이 있으면 지우고, 없으면 시작한다.
-  // 지우는 길이 새로고침이라 화면은 랜딩으로 돌아온다. 그때는 저장이 없으므로
-  // 같은 버튼이 곧 시작 버튼이 된다.
-  const startNew = () => (hasSave ? wipe() : enter());
+  // 지울 것이 없으면 곧장 시작하고, 있으면 지우고 부팅부터 다시 시작한다.
+  // 확인은 Landing이 받는다. 여기까지 왔으면 이미 두 번 누른 것이다.
+  const startNew = () => (hasSave ? restart(name) : enter());
 
   if (phase === 'landing') {
     return (
@@ -134,7 +176,8 @@ function Game() {
       watching={watching}
       savedScreen={saved?.screen}
       screenRef={screenRef}
-      onReset={wipe}
+      onRestart={() => restart(name)}
+      onQuit={quit}
     />
   );
 }
