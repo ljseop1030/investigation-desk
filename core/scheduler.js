@@ -6,7 +6,13 @@ const PUSH_GAP = 1400;
 
 export function createScheduler(clock, saved = []) {
   let items = [...saved];
-  let seq = 0;
+
+  // 복원한 예약은 이미 id를 갖고 있다. seq를 0에서 다시 시작하면
+  // 새 예약이 같은 id를 재발급해서, id로 취소하는 순간 엉뚱한 걸 지운다.
+  let seq = items.reduce((max, e) => {
+    const n = Number(String(e.id).split(':')[1]);
+    return Number.isFinite(n) && n > max ? n : max;
+  }, 0);
 
   return {
     add(kind, at, payload = {}) {

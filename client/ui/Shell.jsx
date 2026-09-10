@@ -8,9 +8,15 @@ import { Toast } from './Toast.jsx';
 // 부팅 직후 뜨는 필수 공지. 앱이 아니라 창만 빌린다.
 const NOTICE_WIN = { id: '__notice', w: 500, h: 470 };
 
-export function Shell({ apps, notes, status, terminal, chatAppId, watching, onReset }) {
-  const screen = useScreen({ apps, notes });
+export function Shell({ apps, notes, status, terminal, chatAppId, watching, savedScreen, screenRef, onReset }) {
+  const screen = useScreen({ apps, notes, saved: savedScreen });
   const [chatRequest, setChatRequest] = useState(null);
+
+  // 자동 저장이 밖에서 화면 배치를 걷어갈 수 있게 창구를 열어둔다.
+  // 매 렌더마다 최신 클로저로 갈아끼운다.
+  useEffect(() => {
+    if (screenRef) screenRef.current = screen.snapshot;
+  });
 
   const noticeApp = { ...NOTICE_WIN, title: terminal.deviceNotice.title };
   useEffect(() => {

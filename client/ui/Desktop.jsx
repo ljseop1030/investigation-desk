@@ -40,13 +40,13 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
         )}
       </div>
 
-      {sc.notes.map((n, i) => (
+      {sc.notes.map((n) => (
         <PostIt
-          key={n.id ?? i}
+          key={n.id}
           note={n}
           z={n.z}
-          onFocus={() => sc.raiseNote(i)}
-          onDrag={(r, y) => sc.moveNote(i, r, y)}
+          onFocus={() => sc.raiseNote(n.id)}
+          onDrag={(r, y) => sc.moveNote(n.id, r, y)}
         />
       ))}
 
