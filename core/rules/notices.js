@@ -1,10 +1,11 @@
 import { TRAIT } from '../../shared/enums.js';
+import { createTiming } from './timing.js';
 
 const DEFAULT_INTERVAL = [100, 260];
 
-export function createNoticeRules(notices, characters, { tempo = 1, random = Math.random } = {}) {
-  const ms = (sec) => (sec * 1000) / tempo;
-  const pickIn = ([lo, hi]) => lo + random() * (hi - lo);
+export function createNoticeRules(notices, characters, opts = {}) {
+  const { pick, wait } = createTiming(opts);
+  const random = opts.random ?? Math.random;
 
   const sender = characters.find((c) => (c.traits ?? []).includes(TRAIT.BROADCAST)) ?? null;
 
@@ -12,7 +13,7 @@ export function createNoticeRules(notices, characters, { tempo = 1, random = Mat
     from: sender?.id ?? null,
 
     nextAt(now) {
-      return now + ms(pickIn(sender?.broadcastInterval ?? DEFAULT_INTERVAL));
+      return now + wait(pick(sender?.broadcastInterval ?? DEFAULT_INTERVAL));
     },
 
     // 아직 안 보낸 것 중 하나. 다 보냈으면 null.

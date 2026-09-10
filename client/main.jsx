@@ -4,6 +4,7 @@ import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createLocalStorage } from '../adapters/storage/local.js';
 import { createAutosave } from './save.js';
+import { watchActivity } from './activity.js';
 import { createScheduler, restore } from '../core/scheduler.js';
 import { createState, SAVE_VERSION } from '../core/state.js';
 import { createView } from '../core/view.js';
@@ -20,13 +21,42 @@ import { Boot } from './ui/Boot.jsx';
 import { Landing } from './ui/Landing.jsx';
 import { Shell } from './ui/Shell.jsx';
 
-const TEMPO = 10;   // 개발 중 배속
+// 기다림 배속. 아무것도 설정하지 않으면 실제 속도로 돈다.
+// 개발 중에는 .env에 VITE_TEMPO=10을 넣는다. 기본값을 안전한 쪽에 두는 이유는,
+// 소스에 배속을 박아두면 배포 전에 한 줄 고치는 걸 잊는 날 게임이 망가지기 때문.
+const TEMPO = Number(import.meta.env.VITE_TEMPO) || 1;
 
-// 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 한다.
+// 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 하고,
+// core는 여기에 로그인해야 알림·외부인 시계를 돌린다.
 const CHAT_APP = 'msg';
 
 const clock = createClock();
 const storage = createLocalStorage();
+
+// 게임 안에서 '처음부터'를 누르면 저장을 지우고 새로고침한다. 그러면 랜딩으로
+// 떨어지는데, 부팅부터 다시 보고 싶다는 요청이었다. 세이브(localStorage)는
+// 지워야 하고 이 표식은 남아야 해서 sessionStorage에 둔다. 탭을 닫으면 사라진다.
+const RESUME_KEY = 'investigation-desk:resume';
+
+const takeResume = () => {
+  try {
+    const v = sessionStorage.getItem(RESUME_KEY);
+    if (v !== null) sessionStorage.removeItem(RESUME_KEY);
+    return v;
+  } catch {
+    return null;   // 시크릿 모드 등. 표식이 없으면 랜딩으로 간다.
+  }
+};
+
+const markResume = (name) => {
+  try {
+    sessionStorage.setItem(RESUME_KEY, name ?? '');
+  } catch {
+    /* 못 남기면 랜딩으로 떨어질 뿐이다 */
+  }
+};
+
+const resumeName = takeResume();
 
 const saved = storage.load();
 const hasSave = saved?.v === SAVE_VERSION;
@@ -36,6 +66,10 @@ const scheduler = createScheduler(clock, restore(saved?.scheduler ?? [], clock.n
 
 // AI 호출 중에 끊긴 대화. 내 말은 되찾아뒀고 답장만 다시 잡아준다.
 state.interrupted().forEach((cid) => scheduler.add('reply', clock.now() + 2500, { cid }));
+
+// 자리를 비운 시간은 유휴가 아니다. 유휴 시계는 이 세션이 시작되는 지금부터 잰다.
+state.touch(clock.now());
+
 const view = createView({ state, content });
 const events = createEvents();
 
@@ -46,15 +80,19 @@ const actions = createActions({
     chat: createChatRules({ tempo: TEMPO }),
     records: createRecordRules(content.records, { tempo: TEMPO }),
     forms: createFormRules({ tempo: TEMPO }),
-    story: createStoryRules(content.story, content.characters),
+    story: createStoryRules(content.story, content.characters, { tempo: TEMPO }),
     notices: createNoticeRules(content.notices, content.characters, { tempo: TEMPO }),
   },
   // P5까지는 fallback 대사로 돈다
   ai: { reply: async () => { throw new Error('no ai yet'); } },
+  chatApp: CHAT_APP,
 });
 
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
 setInterval(actions.tick, 1000);
+
+// 유휴 판정의 기준. core가 모르는 조작(문서 읽기, 창 옮기기, 탭 복귀)까지 친다.
+watchActivity(actions.markActive);
 
 // 화면 배치를 걷어올 창구. Shell이 매 렌더마다 채운다.
 const screenRef = { current: null };
@@ -69,13 +107,27 @@ window.game = actions;
 window.view = view;
 window.save = autosave;   // save.flush(true) / save.bytes()
 
-// 저장을 지우고 처음부터. state와 scheduler가 모듈 최상단에서 한 번
-// 만들어지는 구조라, 새로고침이 setter를 하나씩 되돌리는 것보다 확실하다.
-// 버튼 위치와 방식은 나중에 바뀐다. 지우는 일은 여기 한 군데.
-function wipe() {
+// 부팅부터 다시. state와 scheduler가 모듈 최상단에서 한 번 만들어지는
+// 구조라, 새로고침이 setter를 하나씩 되돌리는 것보다 확실하다.
+// 이름은 들고 간다. 같은 사람이 다시 앉는 것이지 다른 사람이 오는 게 아니다.
+function restart(name) {
   autosave.stop();
   storage.clear();
+  markResume(name ?? state.get().player.name);
   location.reload();
+}
+
+// 저장하고 시작 화면으로. 세이브를 남기므로 '이어서'가 살아 있다.
+function quit() {
+  autosave.flush(true);
+  autosave.stop();
+  location.reload();
+}
+
+// 이어서 들어오는 길. 랜딩을 거치지 않으므로 여기서 채비를 끝낸다.
+if (resumeName !== null) {
+  state.setName(resumeName);
+  autosave.start();
 }
 
 // 지금 보고 있는 대화. ref로 두는 이유는 창을 옮겨 다니는 잦은 변화가
@@ -84,14 +136,18 @@ const watching = { current: null };
 
 // landing → boot → desk
 function Game() {
-  const [phase, setPhase] = useState('landing');
-  const [name, setName] = useState(saved?.player?.name ?? '');
+  const [phase, setPhase] = useState(resumeName === null ? 'landing' : 'boot');
+  const [name, setName] = useState(resumeName ?? saved?.player?.name ?? '');
 
   const enter = () => {
     state.setName(name);
     autosave.start();
     setPhase('boot');
   };
+
+  // 지울 것이 없으면 곧장 시작하고, 있으면 지우고 부팅부터 다시 시작한다.
+  // 확인은 Landing이 받는다. 여기까지 왔으면 이미 두 번 누른 것이다.
+  const startNew = () => (hasSave ? restart(name) : enter());
 
   if (phase === 'landing') {
     return (
@@ -101,7 +157,7 @@ function Game() {
         setName={setName}
         hasSave={hasSave}
         onContinue={enter}
-        onNew={wipe}
+        onNew={startNew}
       />
     );
   }
@@ -120,7 +176,8 @@ function Game() {
       watching={watching}
       savedScreen={saved?.screen}
       screenRef={screenRef}
-      onReset={wipe}
+      onRestart={() => restart(name)}
+      onQuit={quit}
     />
   );
 }

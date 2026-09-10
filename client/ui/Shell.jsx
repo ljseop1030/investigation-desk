@@ -8,7 +8,12 @@ import { Toast } from './Toast.jsx';
 // 부팅 직후 뜨는 필수 공지. 앱이 아니라 창만 빌린다.
 const NOTICE_WIN = { id: '__notice', w: 500, h: 470 };
 
-export function Shell({ apps, notes, status, terminal, chatAppId, watching, savedScreen, screenRef, onReset }) {
+// 바탕화면이 자리를 잡고 나서 뜬다. 즉시 띄우면 부팅이 끝나기도 전에
+// 창부터 있는 꼴이라, 단말이 켜지는 과정으로 읽히지 않는다.
+// 다만 기다림으로 느껴지면 안 된다. 한 박자면 충분하다.
+const NOTICE_DELAY = 700;
+
+export function Shell({ apps, notes, status, terminal, chatAppId, watching, savedScreen, screenRef, onRestart, onQuit }) {
   const screen = useScreen({ apps, notes, saved: savedScreen });
   const [chatRequest, setChatRequest] = useState(null);
 
@@ -20,8 +25,9 @@ export function Shell({ apps, notes, status, terminal, chatAppId, watching, save
 
   const noticeApp = { ...NOTICE_WIN, title: terminal.deviceNotice.title };
   useEffect(() => {
-    screen.open(noticeApp);
-    // 부팅 때 한 번만.
+    // 부팅 때 한 번만. 이어서 들어와도 저장된 창이 먼저 그려지고 그 위에 뜬다.
+    const t = setTimeout(() => screen.open(noticeApp), NOTICE_DELAY);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -38,7 +44,8 @@ export function Shell({ apps, notes, status, terminal, chatAppId, watching, save
         icons={apps}
         status={status}
         screen={screen}
-        onReset={onReset}
+        onRestart={onRestart}
+        onQuit={onQuit}
         renderApp={(app) =>
           app.id === NOTICE_WIN.id ? (
             <DeviceNotice notice={terminal.deviceNotice} onClose={() => screen.close(NOTICE_WIN.id)} />

@@ -1,14 +1,31 @@
 import { useEffect, useState } from 'react';
 import S from './strings.js';
+import { useTypewriter } from './typewriter.js';
 
 export function Landing({ terminal, name, setName, hasSave, onContinue, onNew }) {
   const [line, setLine] = useState(0);
   const [info, setInfo] = useState(false);
+  const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setLine((n) => (n + 1) % terminal.setupLines.length), 2600);
     return () => clearInterval(t);
   }, [terminal.setupLines.length]);
+
+  // 이름 없이는 아무 데도 못 간다. 단말이 사용자를 특정하지 못한 상태다.
+  const ready = name.trim().length > 0;
+
+  // 이름을 고치면 확인 상태가 풀린다. 다른 마음을 먹은 것으로 친다.
+  useEffect(() => setArmed(false), [name]);
+
+  const warning = useTypewriter(S.desktop.resetConfirm, armed);
+
+  // 지울 것이 없으면 그냥 시작한다. 있으면 한 번 더 누르게 한다.
+  const newGame = () => {
+    if (!hasSave) return onNew();
+    if (!armed) return setArmed(true);
+    onNew();
+  };
 
   const item = (label, on, enabled = true, note) => (
     <button key={label} className="landing-item" onClick={enabled ? on : undefined} disabled={!enabled}>
@@ -60,10 +77,25 @@ export function Landing({ terminal, name, setName, hasSave, onContinue, onNew })
 
             <div className="landing-setup">{terminal.setupLines[line]}</div>
 
-            <div className="landing-menu">
-              {item(S.landing.continue, onContinue, hasSave, hasSave ? null : S.landing.noSave)}
-              {item(S.common.newGame, onNew)}
-              {item(S.landing.about, () => setInfo(true))}
+            <div className="landing-menu-wrap">
+              <div className="landing-menu">
+                {item(
+                  S.landing.continue,
+                  onContinue,
+                  ready && hasSave,
+                  hasSave ? null : S.landing.noSave
+                )}
+                {item(S.common.newGame, newGame, ready)}
+                {item(S.landing.about, () => setInfo(true), ready)}
+              </div>
+
+              {/* 흐름에서 빼서 띄운다. 자리를 예약하면 안 눌렀을 때 아래가 텅 빈다. */}
+              {armed && (
+                <div className="landing-confirm" aria-live="polite">
+                  {warning}
+                  <span className="caret" aria-hidden="true">_</span>
+                </div>
+              )}
             </div>
           </>
         )}

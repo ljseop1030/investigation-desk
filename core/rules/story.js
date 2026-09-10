@@ -1,5 +1,10 @@
 // 캐릭터 사이의 분기. 대사와 조건은 content/story.js가 갖는다.
 // 여기서는 "지금 이 조건이 성립하는가"만 판정한다.
+//
+// 배속은 기다림에만 건다. 유휴 시간과 추궁까지의 지연은 줄이고,
+// 말풍선 사이 간격(lineGapSec)은 그대로 둔다. chat.js와 같은 경계다.
+
+import { createTiming } from './timing.js';
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -8,8 +13,8 @@ const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const namePattern = (name) =>
   `(^|[^A-Za-z0-9])${escape(name)}([^A-Za-z0-9]|$)`;
 
-export function createStoryRules(story, characters, { random = Math.random } = {}) {
-  const pick = ([lo, hi]) => lo + random() * (hi - lo);
+export function createStoryRules(story, characters, opts = {}) {
+  const { pick, wait, beat } = createTiming(opts);
 
   const burnId = story.leak.burns;
   const burnName = characters.find((c) => c.id === burnId)?.name ?? burnId;
@@ -22,7 +27,7 @@ export function createStoryRules(story, characters, { random = Math.random } = {
   return {
     // 아무것도 안 하고 있으면 외부인이 먼저 말을 건다.
     outsiderDue(lastActAt, now) {
-      return now - lastActAt > story.outsiderAppears.afterIdleSec * 1000;
+      return now - lastActAt > wait(story.outsiderAppears.afterIdleSec);
     },
 
     // (1) 메신저에서 발설. 소각 대상 본인과의 대화는 판정하지 않는다.
@@ -47,22 +52,22 @@ export function createStoryRules(story, characters, { random = Math.random } = {
 
     // 대사와 도착 간격은 콘텐츠에서 그대로 가져온다.
     outsiderLines(now) {
-      return schedule(story.outsiderAppears.lines, now, story.outsiderAppears.lineGapSec, pick);
+      return schedule(story.outsiderAppears.lines, now, story.outsiderAppears.lineGapSec, pick, beat);
     },
 
     confrontLines(how, now) {
       const c = story.leak.confront;
       const lines = how === 'report' ? c.byReport : c.byMessage;
-      const at = now + pick(c.delaySec) * 1000;
-      return { by: c.by, lines: schedule(lines, at, c.lineGapSec, pick) };
+      const at = now + wait(pick(c.delaySec));
+      return { by: c.by, lines: schedule(lines, at, c.lineGapSec, pick, beat) };
     },
   };
 }
 
-function schedule(lines, start, gapSec, pick) {
+function schedule(lines, start, gapSec, pick, beat) {
   let at = start;
   return lines.map((text, i) => {
-    if (i) at += pick(gapSec) * 1000;
+    if (i) at += beat(pick(gapSec));
     return { text, at, last: i === lines.length - 1 };
   });
 }

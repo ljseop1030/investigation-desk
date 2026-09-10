@@ -16,6 +16,8 @@
 
 :root {
   --font-boot:   'Galmuri14', 'Nanum Gothic Coding', monospace;
+  /* 같은 계열의 11px 전용. 갈무리14를 줄이면 뭉개지지만 이건 그 크기로 그려졌다. */
+  --font-boot-sm: 'Galmuri11', 'Nanum Gothic Coding', monospace;
   --font-chrome: 'Nanum Gothic', sans-serif;
   --font-body:   'Nanum Gothic', sans-serif;
   --font-mono:   'Nanum Gothic Coding', monospace;
@@ -26,6 +28,8 @@
   /* 갈무리는 지정 높이의 배수를 벗어나면 뭉갠다. 부팅 화면 값은 바꾸지 말 것. */
   --fs-boot: 14px;
   --lh-boot: 28px;
+  --fs-boot-sm: 11px;
+  --lh-boot-sm: 22px;
 
   --fs-body: 12px;
   --fs-small: 11px;
@@ -348,8 +352,69 @@ pre { margin: 0; }
   border: 1px solid var(--face-lo);
   box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .16);
 }
-.tb-reset { margin-left: auto; font-weight: 400; }
-.tb-reset + .tb-clock { margin-left: 6px; }
+
+/* ---------- 시작 버튼 ---------- */
+
+.start-wrap { position: relative; display: flex; }
+
+/* 메뉴 밖을 누르면 닫힌다. 창을 잘못 누르지 않게 화면 전체를 덮는다. */
+.start-backdrop { position: fixed; inset: 0; z-index: 5001; }
+
+.tb-start { font-weight: 700; padding: 4px 14px; }
+
+.start-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 3px);
+  min-width: 176px;
+  padding: 3px;
+  background: var(--face);
+  border: 1px solid var(--edge);
+  box-shadow: inset 1px 1px 0 var(--face-hi), inset -1px -1px 0 var(--face-lo),
+              3px 3px 0 rgba(0, 0, 0, .4);
+  z-index: 5002;
+}
+
+.start-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.start-item:hover:not(:disabled) { background: var(--bar); color: #FFFFFF; }
+.start-item:disabled { color: var(--hint); cursor: default; }
+.start-item.is-armed { background: var(--face-sunk); }
+
+/* 확인 문구. 브라우저 대화상자 대신 단말이 직접 되묻는다.
+   갈무리를 쓰는 이유는 이게 앱의 말이 아니라 단말이 자기 조작에 대해 하는
+   말이기 때문이다. 전원과 초기화는 앱이 아니라 기계의 일이다.
+   두 줄 자리를 늘 비워둔다. 나타날 때 메뉴가 자라면 항목이 위로 밀린다. */
+.start-confirm {
+  position: absolute;
+  left: calc(100% + 5px);
+  bottom: 0;
+  width: 236px;
+  padding: 8px 12px;
+  background: var(--face);
+  border: 1px solid var(--edge);
+  box-shadow: inset 1px 1px 0 var(--face-hi), inset -1px -1px 0 var(--face-lo),
+              3px 3px 0 rgba(0, 0, 0, .4);
+  font-size: var(--fs-small);
+  line-height: 1.75;
+  color: var(--alert);
+  white-space: normal;
+}
+
+.caret { animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; }
+}
 
 /* ---------- 토스트 ---------- */
 
@@ -702,6 +767,21 @@ pre { margin: 0; }
 .landing-caret { color: #7FA0B5; }
 .landing-item:disabled .landing-caret { color: #39434A; }
 .landing-note { margin-left: auto; color: #4E5A63; }
+/* 메뉴 바로 아래에 띄운다. 흐름 밖이라 나타나도 아무것도 밀리지 않고,
+   안 눌렀을 때 빈 자리도 남지 않는다. 캐럿 열에 맞춰 들여써서
+   눌린 항목에서 이어지는 말처럼 읽히게 한다. */
+.landing-menu-wrap { position: relative; }
+.landing-confirm {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  padding-left: 20px;
+  font-family: var(--font-boot-sm);
+  font-size: var(--fs-boot-sm);
+  line-height: var(--lh-boot-sm);
+  color: #C98D74;
+}
 .landing-intro { font-family: var(--font-body); font-size: var(--fs-body); line-height: 2; color: #A8B4BC; white-space: pre-wrap; }
 .landing-footnote { color: #6E7C85; }
 .landing-back {
