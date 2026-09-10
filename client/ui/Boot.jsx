@@ -26,7 +26,7 @@ export function Boot({ boot, onDone }) {
           {l}
         </div>
       ))}
-      {n >= lines.length && <div className="boot-wait">{S.boot.preparing}</div>}
+      {n >= lines.length && <div className="boot-wait">{boot.preparing}</div>}
       <div className="boot-skip">{S.boot.skip}</div>
     </div>
   );

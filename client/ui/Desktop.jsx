@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import S from './strings.js';
+import { fmt } from './format.js';
+import { useGame } from './GameProvider.jsx';
 import { iconFor } from './icons.jsx';
 import { Window } from './Window.jsx';
 import { PostIt } from './PostIt.jsx';
@@ -8,8 +9,10 @@ import { Taskbar } from './Taskbar.jsx';
 
 // 창 안에 무엇을 그릴지는 renderApp이 정한다. Desktop은 배치만 안다.
 export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset }) {
+  const { content } = useGame();
   const [selIcon, setSelIcon] = useState(null);
   const shown = icons ?? apps;
+  const st = content.terminal.desktopStatus;
 
   return (
     <div className="desk on-dark">
@@ -31,8 +34,8 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
 
         {status && (
           <div className="desk-status">
-            <div>{S.desktop.terminal(status.assetTag)}</div>
-            {status.user ? <div>{S.desktop.user(status.user)}</div> : null}
+            <div>{fmt(st.terminal, { tag: status.assetTag })}</div>
+            {status.user ? <div>{fmt(st.user, { name: status.user })}</div> : null}
           </div>
         )}
       </div>

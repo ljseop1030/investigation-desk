@@ -32,7 +32,7 @@ export function DeviceNotice({ notice, onClose }) {
           className="btn btn-default"
           style={{ marginLeft: 'auto' }}
           onClick={() => {
-            if (skip) notify({ kind: 'sys', text: S.toast.noticeAlwaysShown });
+            if (skip) notify({ kind: 'sys', text: notice.alwaysShown });
             onClose();
           }}
         >

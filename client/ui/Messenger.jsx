@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TRAIT } from '../../shared/enums.js';
 import S from './strings.js';
+import { fmt } from './format.js';
 import { useGame } from './GameProvider.jsx';
 
 const clockStr = (ts) => {
@@ -13,6 +14,7 @@ const has = (c, trait) => (c.traits ?? []).includes(trait);
 
 export function Messenger({ chatRequest, watching }) {
   const { content, actions, chats, typing, seenAt, outsider } = useGame();
+  const T = content.systems.msg;
 
   // 최근 연락순. 대화가 없는 사람은 뒤로, 그 안에서는 콘텐츠 순서.
   const lastAt = (cid) => {
@@ -123,12 +125,14 @@ export function Messenger({ chatRequest, watching }) {
             </div>
           ))}
 
-          {typing[ch.id] && <div className="msg-typing">{S.messenger.typing(ch.name)}</div>}
+          {typing[ch.id] && (
+            <div className="msg-typing">{fmt(S.messenger.typing, { name: ch.name })}</div>
+          )}
           <div ref={end} />
         </div>
 
         {burned || broadcast ? (
-          <div className="msg-closed">{burned ? S.messenger.burned : S.messenger.broadcastOnly}</div>
+          <div className="msg-closed">{burned ? T.burned : T.broadcastOnly}</div>
         ) : (
           <div className="msg-input">
             <textarea

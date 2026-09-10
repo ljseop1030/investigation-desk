@@ -17,5 +17,6 @@ export { default as notices } from '../content/notices.js';
 export { default as story }   from '../content/story.js';
 export { default as apps }    from '../content/screen/apps.js';
 export { default as notes }   from '../content/screen/notes.js';
+export { default as systems } from '../content/screen/systems.js';
 export * from '../content/screen/org.js';
 export * as terminal from '../content/screen/terminal.js';

@@ -1,5 +1,6 @@
 import { startDrag } from './drag.js';
 
+// 색은 CSS에 있다. 콘텐츠는 어느 색인지만 고른다(note.tone).
 export function PostIt({ note, z, onDrag, onFocus }) {
   const start = (e) => {
     onFocus();
@@ -13,10 +14,10 @@ export function PostIt({ note, z, onDrag, onFocus }) {
     <div
       onMouseDown={start}
       onTouchStart={start}
-      className="postit"
-      style={{ right: note.r, top: note.y, background: note.color, zIndex: z }}
+      className={`postit is-${note.tone ?? 'yellow'}`}
+      style={{ right: note.r, top: note.y, zIndex: z }}
     >
-      <div className="postit-bar" style={{ background: note.head }}>
+      <div className="postit-bar">
         <span>{note.title}</span>
       </div>
       <div className="postit-body">{note.text}</div>

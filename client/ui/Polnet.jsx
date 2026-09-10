@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import S from './strings.js';
+import { fmt } from './format.js';
 import { useGame } from './GameProvider.jsx';
 
 export function Polnet() {
@@ -34,7 +35,7 @@ export function Polnet() {
       <div className="doc-pane">
         <div className="doc-title">{doc.title}</div>
         <div className="doc-meta">
-          {S.polnet.posted(content.TEAM)}
+          {fmt(S.polnet.posted, { team: content.TEAM })}
           {doc.date ? ` · ${doc.date}` : ''}
         </div>
         <pre className="doc-body">{doc.body}</pre>

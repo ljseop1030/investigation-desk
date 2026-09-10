@@ -80,7 +80,6 @@ function Game() {
     <Shell
       apps={content.apps}
       notes={content.notes}
-      status={{ ...content.terminal.boot, caseCount: content.cases.length, user: name }}
       terminal={content.terminal}
       chatAppId={CHAT_APP}
       watching={watching}

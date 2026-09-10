@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { RECORD } from '../../core/view.js';
 import { STATUS } from '../../shared/enums.js';
-import S from './strings.js';
+import { fmt } from './format.js';
 
 const Ctx = createContext(null);
 export const useGame = () => useContext(Ctx);
@@ -53,21 +53,22 @@ export function GameProvider({ actions, view, events, content, watching, childre
       const c = content.characters.find((x) => x.id === cid);
       return c ? `${c.name} ${c.rank ?? ''}`.trim() : cid;
     };
+    const T = content.systems;
 
     const off = [
       events.on('record:requested', ({ recordId }) => {
         setRecordStates((s) => ({ ...s, [recordId]: RECORD.PENDING }));
-        notify({ kind: 'sys', text: S.toast.requestReceived });
+        notify({ kind: 'sys', text: T.db.requestReceived });
       }),
 
       events.on('record:unlocked', ({ recordId }) => {
         setRecordStates((s) => ({ ...s, [recordId]: RECORD.OPEN }));
-        notify({ kind: 'sys', text: S.toast.dbApproved(recordTitle(recordId)) });
+        notify({ kind: 'sys', text: fmt(T.db.approved, { title: recordTitle(recordId) }) });
       }),
 
       events.on('record:registered', ({ recordId }) => {
         setRecordStates((s) => ({ ...s, [recordId]: RECORD.OPEN }));
-        notify({ kind: 'sys', text: S.toast.dbRegistered(recordTitle(recordId)) });
+        notify({ kind: 'sys', text: fmt(T.db.registered, { title: recordTitle(recordId) }) });
       }),
 
       events.on('form:submitted', ({ formId }) =>
@@ -78,8 +79,8 @@ export function GameProvider({ actions, view, events, content, watching, childre
         notify({
           kind: 'sys',
           text: pass
-            ? S.toast.formAccepted(formTitle(formId))
-            : S.toast.formRejected(formTitle(formId), bad.length),
+            ? fmt(T.form.accepted, { title: formTitle(formId) })
+            : fmt(T.form.rejected, { title: formTitle(formId), n: bad.length }),
         });
       }),
 
@@ -101,7 +102,7 @@ export function GameProvider({ actions, view, events, content, watching, childre
 
       events.on('character:burned', () => {
         setOutsider('burned');
-        notify({ kind: 'sys', text: S.toast.contactNotFound });
+        notify({ kind: 'sys', text: T.msg.contactNotFound });
       }),
 
       events.on('app:authed', ({ appId }) =>
