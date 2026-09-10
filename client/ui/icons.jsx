@@ -9,7 +9,7 @@
 // 지구본이 아니라 게시판, 원통이 아니라 캐비닛.
 
 const svg = (children) => (
-  <svg viewBox="0 0 32 32" width="32" height="32" shapeRendering="crispEdges" aria-hidden="true">
+  <svg viewBox="0 0 32 32" width="48" height="48" shapeRendering="crispEdges" aria-hidden="true">
     {children}
   </svg>
 );

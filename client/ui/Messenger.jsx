@@ -105,7 +105,6 @@ export function Messenger({ chatRequest, watching }) {
           <span>
             {ch.name} {ch.rank}
           </span>
-          <span className="msg-head-tag">{ch.tag}</span>
         </div>
 
         <div className="msg-log">
