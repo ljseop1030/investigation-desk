@@ -16,18 +16,15 @@
 content/          사건, 문서, 양식, 캐릭터 (프라이빗 서브모듈)
 client/           브라우저 진입점과 화면
   main.jsx          조립 지점. 여기만 전 층을 안다
-  save.js           언제 저장할지
-  content-loader.js
-  ui/               DOM. strings.js(앱 크롬) · format.js · screen.js
+  content-loader.js  save.js  activity.js
+  ui/               DOM
 core/             게임 로직. DOM과 fetch를 모른다
   scheduler.js      절대시각 큐
   state.js  actions.js  events.js  view.js
-  rules/            chat · records · forms · story
-adapters/         플랫폼 경계
-  clock.js          now()
-  storage/local.js  localStorage. P10에서 server.js가 옆에 선다
+  rules/            chat · records · forms · story · notices · timing
+adapters/         플랫폼 경계. 시계, 저장소, AI
 shared/           enums. 코드가 쓰는 어휘
-test/             core만. 브라우저도 콘텐츠도 없이 돈다
+
 ```
 
 `server/`(`/api/chat`)는 P5에서 생긴다. 그전까지 모든 대화는 캐릭터 `fallback` 대사로 돈다.
@@ -48,7 +45,7 @@ test/             core만. 브라우저도 콘텐츠도 없이 돈다
 - [x] P3.5 비주얼 방향
 
 **개발 배포** — URL 하나. 혼자 쓴다.
-- [ ] P4 문구 정리 · 서브모듈 · 세이브 · 배포 — 문구/서브모듈/세이브 완료, 배포 남음
+- [ ] P4 문구 정리 · 서브모듈 · 세이브 · 배포 — 문구/서브모듈/세이브 완료
 - [ ] P5 AI proxy + 재배포
 
 **다듬기** — 배포 상태 유지, 계속 반영
@@ -68,23 +65,7 @@ test/             core만. 브라우저도 콘텐츠도 없이 돈다
 
 ## 실행 방법
 
-```bash
-git clone --recurse-submodules https://github.com/ljseop1030/investigation-desk.git
-cd investigation-desk
-npm install
-npm run dev
-```
-
-`content/`는 프라이빗 서브모듈이라 접근 권한이 없으면 받아지지 않는다.
-그 상태로도 `npm test`(core)는 돌지만 `npm run dev`는 콘텐츠를 못 찾아 멈춘다.
-
-```bash
-npm test          # core 단위 + 흐름 통합
-npm run check     # CI가 도는 것
-npm run build
-```
-
-*배포 URL은 P4-6에서 추가 예정*
+*배포 후 업데이트 예정*
 
 ---
 
