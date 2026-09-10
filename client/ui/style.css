@@ -6,6 +6,12 @@
      사람:   문서 본문, 대화 말풍선, 이름, 양식 기재요령
    애매하면 "이 글자를 누가 쳤나"를 묻는다. */
 
+@import url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Nanum+Gothic+Coding&display=swap');
+
+/* 화면의 모든 색·크기·입체감이 여기서 나온다.
+   폰트도 여기서 불러온다. P4에서 자가 호스팅으로 옮길 때 위 두 줄만 @font-face로 바꾼다.*/
+   
 :root {
   --font-chrome: 'Galmuri11', 'Nanum Gothic', monospace;
   --font-boot:   'Galmuri14', 'Nanum Gothic', monospace;
@@ -443,7 +449,7 @@ pre { margin: 0; }
 
 /* ---------- 메신저 ---------- */
 
-.msg-roster { width: 168px; flex-shrink: 0; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); }
+.msg-roster { width: 200px; flex-shrink: 0; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); }
 .msg-roster-head { padding: 6px 10px; color: var(--ink-soft); border-bottom: 1px solid var(--line); }
 .msg-person {
   display: flex;
