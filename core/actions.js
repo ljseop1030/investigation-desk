@@ -65,6 +65,12 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     );
   }
 
+  // 사람이 화면 앞에 있다는 신호. 클릭이든 타자든 탭 복귀든,
+  // 무엇이었는지는 UI만 안다. core는 '있었다'는 사실만 받는다.
+  function markActive() {
+    state.touch(clock.now());
+  }
+
   // touch()를 부르지 않는다. UI가 자동으로 부르는 함수라
   // 유휴 시계가 되감기면 외부인이 영영 안 나타난다.
   function markSeen(cid) {
@@ -257,5 +263,5 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     syncTyping(now);
   }
 
-  return { send, authenticate, markSeen, requestRecord, saveDraft, submitForm, tick, summonOutsider };
+  return { send, authenticate, markActive, markSeen, requestRecord, saveDraft, submitForm, tick, summonOutsider };
 }
