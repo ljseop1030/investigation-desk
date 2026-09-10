@@ -20,7 +20,10 @@ import { Boot } from './ui/Boot.jsx';
 import { Landing } from './ui/Landing.jsx';
 import { Shell } from './ui/Shell.jsx';
 
-const TEMPO = 10;   // 개발 중 배속
+// 기다림 배속. 아무것도 설정하지 않으면 실제 속도로 돈다.
+// 개발 중에는 .env에 VITE_TEMPO=10을 넣는다. 기본값을 안전한 쪽에 두는 이유는,
+// 소스에 배속을 박아두면 배포 전에 한 줄 고치는 걸 잊는 날 게임이 망가지기 때문.
+const TEMPO = Number(import.meta.env.VITE_TEMPO) || 1;
 
 // 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 하고,
 // core는 여기에 로그인해야 알림·외부인 시계를 돌린다.
@@ -51,7 +54,7 @@ const actions = createActions({
     chat: createChatRules({ tempo: TEMPO }),
     records: createRecordRules(content.records, { tempo: TEMPO }),
     forms: createFormRules({ tempo: TEMPO }),
-    story: createStoryRules(content.story, content.characters),
+    story: createStoryRules(content.story, content.characters, { tempo: TEMPO }),
     notices: createNoticeRules(content.notices, content.characters, { tempo: TEMPO }),
   },
   // P5까지는 fallback 대사로 돈다

@@ -106,6 +106,38 @@ const setup = ({ reply, idleSec = 999999, login = true, onboarding = null } = {}
   return { actions, state, view, events, seen, typing, clock, scheduler, run };
 };
 
+// 배속을 건 판. 기다림만 줄고 말풍선 간격은 그대로여야 한다.
+const fastSetup = () => {
+  const clock = fakeClock(0);
+  const scheduler = createScheduler(clock);
+  const state = createState();
+  const events = createEvents();
+  const seen = [];
+  events.on('message', (m) => seen.push(m));
+
+  const actions = createActions({
+    content: CONTENT, state, scheduler, events, clock,
+    rules: {
+      chat: createChatRules({ tempo: 10, random: () => 0 }),
+      records: createRecordRules(CONTENT.records, { tempo: 10, random: () => 0 }),
+      forms: createFormRules({ tempo: 10, random: () => 0 }),
+      story: createStoryRules(
+        { ...CONTENT.story, outsiderAppears: { ...CONTENT.story.outsiderAppears, afterIdleSec: 999999 } },
+        CONTENT.characters,
+        { tempo: 10, random: () => 0 }
+      ),
+    },
+    ai: { reply: async () => ({ messages: ['이거예요~', '확인해보세요 ^^'] }) },
+    chatApp: 'msg',
+  });
+  actions.authenticate('msg', 't2211', 'msg2211');
+
+  const run = async (sec) => {
+    for (let i = 0; i < sec; i++) { clock.advance(1000); actions.tick(); await null; }
+  };
+  return { fast: { actions, state, seen, run } };
+};
+
 const replies = (seen) => seen.filter((m) => !m.me);
 
 test('보냄 → 읽음 → 답장 → 도착', async () => {
@@ -329,6 +361,30 @@ test('메신저에 로그인하기 전에는 외부인이 오지 않는다', asy
   actions.authenticate('msg', 't2211', 'msg2211');
   await run(400);
   assert.equal(state.progress().story.outsider, 'live', '로그인하면 그때부터 잰다');
+});
+
+/* ---------- 배속 ---------- */
+
+test('배속은 기다림만 줄인다', async () => {
+  // tempo 10에서 강윤하의 읽기 480초는 48초로 줄어야 하고,
+  // K의 유휴 115초도 11.5초로 같이 줄어야 한다. 한쪽만 줄면 순서가 뒤집힌다.
+  const { fast } = fastSetup();
+  fast.actions.send('kang', '자료 주세요');
+  await fast.run(47);
+  assert.equal(fast.state.progress().chats.kang[0].read, false);
+  await fast.run(2);
+  assert.equal(fast.state.progress().chats.kang[0].read, true, '480초가 48초로');
+});
+
+test('말풍선 사이는 배속에 눌리지 않는다', async () => {
+  const { fast } = fastSetup();
+  fast.actions.send('kang', '자료 주세요');
+  await fast.run(80);   // 읽기 48초 + burstWait 18초 + 여유
+
+  const arrived = fast.seen.filter((m) => !m.me);
+  assert.equal(arrived.length, 2);
+  // 0.7초 간격이 배속에 눌렸다면 둘이 같은 tick에 떨어진다.
+  assert.ok(arrived[1].at - arrived[0].at >= 700, '간격이 0.7초 이상 남아 있다');
 });
 
 /* ---------- 미확인 ---------- */
