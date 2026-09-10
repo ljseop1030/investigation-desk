@@ -1,11 +1,11 @@
 import { ACCESS } from '../../shared/enums.js';
+import { createTiming } from './timing.js';
 
 const APPROVAL = [45, 85]; // 조회 승인까지 (초)
 const MIN_REASON = 5;      // 조회 사유 최소 글자수
 
-export function createRecordRules(records, { tempo = 1, random = Math.random } = {}) {
-  const ms = (sec) => (sec * 1000) / tempo;
-  const pick = ([lo, hi]) => lo + random() * (hi - lo);
+export function createRecordRules(records, opts = {}) {
+  const { pick, wait } = createTiming(opts);
   const byId = new Map(records.map((r) => [r.id, r]));
 
   return {
@@ -17,7 +17,7 @@ export function createRecordRules(records, { tempo = 1, random = Math.random } =
     },
 
     approvalAt(now) {
-      return now + ms(pick(APPROVAL));
+      return now + wait(pick(APPROVAL));
     },
 
     // LLM이 준 키를 그대로 믿지 않는다.
