@@ -10,6 +10,12 @@ export function Landing({ terminal, name, setName, hasSave, onContinue, onNew })
     return () => clearInterval(t);
   }, [terminal.setupLines.length]);
 
+  // 지울 것이 있을 때만 되묻는다. 저장이 없으면 그냥 시작하는 버튼이다.
+  const newGame = () => {
+    if (hasSave && !window.confirm(S.desktop.resetConfirm)) return;
+    onNew();
+  };
+
   const item = (label, on, enabled = true, note) => (
     <button key={label} className="landing-item" onClick={enabled ? on : undefined} disabled={!enabled}>
       <span className="landing-caret">▸</span>
@@ -62,7 +68,7 @@ export function Landing({ terminal, name, setName, hasSave, onContinue, onNew })
 
             <div className="landing-menu">
               {item(S.landing.continue, onContinue, hasSave, hasSave ? null : S.landing.noSave)}
-              {item(S.common.newGame, onNew)}
+              {item(S.common.newGame, newGame)}
               {item(S.landing.about, () => setInfo(true))}
             </div>
           </>

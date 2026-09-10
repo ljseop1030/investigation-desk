@@ -31,7 +31,7 @@ export function Taskbar({ wins, top, onFocus, onReset }) {
           className="tb-item tb-reset px"
           onClick={() => window.confirm(S.desktop.resetConfirm) && onReset()}
         >
-          {S.desktop.reset}
+          {S.common.newGame}
         </button>
       )}
 

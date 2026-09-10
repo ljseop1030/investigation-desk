@@ -93,6 +93,11 @@ function Game() {
     setPhase('boot');
   };
 
+  // '처음부터'는 두 가지 일이다. 지울 것이 있으면 지우고, 없으면 시작한다.
+  // 지우는 길이 새로고침이라 화면은 랜딩으로 돌아온다. 그때는 저장이 없으므로
+  // 같은 버튼이 곧 시작 버튼이 된다.
+  const startNew = () => (hasSave ? wipe() : enter());
+
   if (phase === 'landing') {
     return (
       <Landing
@@ -101,7 +106,7 @@ function Game() {
         setName={setName}
         hasSave={hasSave}
         onContinue={enter}
-        onNew={wipe}
+        onNew={startNew}
       />
     );
   }
