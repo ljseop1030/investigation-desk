@@ -13,20 +13,27 @@
 ## 프로젝트 구조
 
 ```
-content/          사건, 문서, 양식, 캐릭터 (저장소에 없음)
+content/          사건, 문서, 양식, 캐릭터 (프라이빗 서브모듈)
 client/           브라우저 진입점과 화면
-  main.js           조립 지점. 여기만 전 층을 안다
+  main.jsx          조립 지점. 여기만 전 층을 안다
+  save.js           언제 저장할지
   content-loader.js
-  ui/               DOM
+  ui/               DOM. strings.js(앱 크롬) · format.js · screen.js
 core/             게임 로직. DOM과 fetch를 모른다
   scheduler.js      절대시각 큐
-  state.js  actions.js  events.js
+  state.js  actions.js  events.js  view.js
   rules/            chat · records · forms · story
-adapters/         플랫폼 경계. 시계, 저장소, AI
-server/           /api/chat, 채점, 세션
+adapters/         플랫폼 경계
+  clock.js          now()
+  storage/local.js  localStorage. P10에서 server.js가 옆에 선다
 shared/           enums. 코드가 쓰는 어휘
+test/             core만. 브라우저도 콘텐츠도 없이 돈다
 ```
-실제 시나리오 데이터(`content/`)는 저장소에 없다. 뭐가 어디 있는지 모르는 게 이 게임의 절반이라서.
+
+`server/`(`/api/chat`)는 P5에서 생긴다. 그전까지 모든 대화는 캐릭터 `fallback` 대사로 돈다.
+
+실제 시나리오 데이터(`content/`)는 별도의 프라이빗 저장소다. 뭐가 어디 있는지 모르는 게 이 게임의 절반이라서.
+콘텐츠 없이도 코드는 빌드되고 테스트는 통과한다. 그 성질이 CI와 라이선스 분리에 걸려 있다.
 
 ---
 
@@ -41,12 +48,12 @@ shared/           enums. 코드가 쓰는 어휘
 - [x] P3.5 비주얼 방향
 
 **개발 배포** — URL 하나. 혼자 쓴다.
-- [ ] P4 세이브 + 배포 파이프라인
+- [ ] P4 문구 정리 · 서브모듈 · 세이브 · 배포 — 문구/서브모듈/세이브 완료, 배포 남음
 - [ ] P5 AI proxy + 재배포
 
 **다듬기** — 배포 상태 유지, 계속 반영
 - [ ] P6 프롬프트 튜닝 · 모델 비교
-- [ ] P7 스토리 재작성 · 콘텐츠 서브모듈화
+- [ ] P7 스토리 재작성
 - [ ] P8 하이브리드 대화 (스크립트 + LLM)
 - [ ] P9 언어 다양화 (번역)
 
@@ -55,24 +62,39 @@ shared/           enums. 코드가 쓰는 어휘
 - [ ] P11 레이트 리밋 · 비용 가드
 - [ ] P12 itch.io 공개 (목표)
 
+단계별 판단과 근거는 [`docs/notes.md`](docs/notes.md)에.
+
 ---
 
 ## 실행 방법
 
-*배포 시 추가 예정*
+```bash
+git clone --recurse-submodules https://github.com/ljseop1030/investigation-desk.git
+cd investigation-desk
+npm install
+npm run dev
+```
+
+`content/`는 프라이빗 서브모듈이라 접근 권한이 없으면 받아지지 않는다.
+그 상태로도 `npm test`(core)는 돌지만 `npm run dev`는 콘텐츠를 못 찾아 멈춘다.
+
+```bash
+npm test          # core 단위 + 흐름 통합
+npm run check     # CI가 도는 것
+npm run build
+```
+
+*배포 URL은 P4-6에서 추가 예정*
 
 ---
 
 ## 메모
 
 - **스케줄러.** `setTimeout` 대신 절대시각을 큐에 쌓고 1초 tick이 만기된 것만 실행한다. 창을 닫았다 열어도 예약된 답장이 이어져야 해서.
-
 - **core는 독립적으로.** 채점도 타이밍 계산도 브라우저 없이 돌아가야 한다.
-
 - **시간 주입.** `clock.now()`. 테스트에서 몇 시간을 건너뛰려고.
-
+- **세이브는 한 덩어리.** 진행·예약·화면을 함께 쓴다. 따로 저장하면 어긋난 순간에 창이 닫혔을 때 유령 예약이 남는다.
 - **persona와 정답은 서버에.** 클라이언트에 내려가면 F12로 게임이 끝난다. 자료 해금 지시도 서버가 검증한다.
-
 - **콘텐츠는 파일, 진행만 DB.** 사건을 DB에 넣으면 문장 하나 고칠 때마다 마이그레이션이다.
 
 ---
