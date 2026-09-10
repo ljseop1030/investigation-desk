@@ -77,23 +77,26 @@ export function Landing({ terminal, name, setName, hasSave, onContinue, onNew })
 
             <div className="landing-setup">{terminal.setupLines[line]}</div>
 
-            <div className="landing-menu">
-              {item(
-                S.landing.continue,
-                onContinue,
-                ready && hasSave,
-                hasSave ? null : S.landing.noSave
-              )}
-              {item(S.common.newGame, newGame, ready)}
-              {item(S.landing.about, () => setInfo(true), ready)}
-            </div>
-
-            {armed && (
-              <div className="landing-confirm">
-                {warning}
-                <span className="caret" aria-hidden="true">_</span>
+            <div className="landing-menu-wrap">
+              <div className="landing-menu">
+                {item(
+                  S.landing.continue,
+                  onContinue,
+                  ready && hasSave,
+                  hasSave ? null : S.landing.noSave
+                )}
+                {item(S.common.newGame, newGame, ready)}
+                {item(S.landing.about, () => setInfo(true), ready)}
               </div>
-            )}
+
+              {/* 흐름에서 빼서 띄운다. 자리를 예약하면 안 눌렀을 때 아래가 텅 빈다. */}
+              {armed && (
+                <div className="landing-confirm" aria-live="polite">
+                  {warning}
+                  <span className="caret" aria-hidden="true">_</span>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

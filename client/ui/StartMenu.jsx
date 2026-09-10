@@ -56,8 +56,10 @@ export function StartMenu({ onRestart, onQuit }) {
               {S.common.quit}
             </button>
 
+            {/* 메뉴 오른쪽에 띄운다. 안에 넣으면 메뉴가 위로 자라 항목이 밀리고,
+                자리를 비워두면 안 눌렀을 때 아래가 텅 빈다. */}
             {armed && (
-              <div className="start-confirm">
+              <div className="start-confirm" aria-live="polite">
                 {typed}
                 <span className="caret" aria-hidden="true">_</span>
               </div>
