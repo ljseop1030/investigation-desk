@@ -17,7 +17,7 @@ const empty = () => ({
     unlocked: [],
     delivered: [],
     forms: {},        // { [formId]: { values, draft, status, marks } }
-    story: { outsider: 'hidden', provided: false },
+    story: { outsider: 'hidden', provided: false, greeted: false },
     lastActAt: 0,
     noticesSent: [],  // 이미 도착한 공지 인덱스
   },
