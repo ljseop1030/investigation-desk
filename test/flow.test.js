@@ -9,7 +9,8 @@ import { createChatRules } from '../core/rules/chat.js';
 import { createRecordRules } from '../core/rules/records.js';
 import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
-import { ACCESS } from '../shared/enums.js';
+import { createNoticeRules } from '../core/rules/notices.js';
+import { ACCESS, TRAIT } from '../shared/enums.js';
 import { fakeClock } from './helpers/clock.js';
 
 const CONTENT = {
@@ -29,6 +30,11 @@ const CONTENT = {
       id: 'baek', name: '백유림',
       style: { read: [4, 15], reply: [15, 45], burst: false, burstWait: 0, bubbles: [1, 3], tailGap: 0 },
       private: { fallback: ['아 넵! 확인해볼게요'] },
+    },
+    {
+      id: 'bot', name: '경무기획계', traits: [TRAIT.BROADCAST],
+      style: { read: [0, 0], reply: [0, 0], burst: false, burstWait: 0, bubbles: [1, 1], tailGap: 0 },
+      private: { fallback: ['본 계정은 발신 전용입니다.'] },
     },
     {
       id: 'kim', name: '김주원',
@@ -61,8 +67,9 @@ const CONTENT = {
 
 // idleSec 기본값을 크게 둬서 K가 끼어들지 않게 한다.
 // 답장을 기다리는 것도 '아무것도 안 하는' 상태라, 그냥 두면 K가 나타나 말풍선이 섞인다.
-// onboarding은 픽스처에서 붙였다 뗀다. 대부분의 테스트는 첫 인사가 없는 쪽을 본다.
-const setup = ({ reply, idleSec = 999999, login = true, onboarding = null } = {}) => {
+// onboarding·notices는 픽스처에서 붙였다 뗀다. 늘 켜두면 다른 테스트의
+// 말풍선에 섞인다.
+const setup = ({ reply, idleSec = 999999, login = true, onboarding = null, notices = null } = {}) => {
   const content = {
     ...CONTENT,
     characters: CONTENT.characters.map((c) =>
@@ -91,6 +98,7 @@ const setup = ({ reply, idleSec = 999999, login = true, onboarding = null } = {}
       records: createRecordRules(content.records, { random: () => 0 }),
       forms: createFormRules({ random: () => 0 }),
       story: createStoryRules(content.story, content.characters, { random: () => 0 }),
+      notices: notices && createNoticeRules(notices, content.characters, { random: () => 0 }),
     },
     ai: { reply: reply ?? (async () => ({ messages: ['이거예요~', '확인해보세요 ^^'] })) },
     chatApp: 'msg',
@@ -352,6 +360,17 @@ test('첫 인사는 한 번만 온다', async () => {
   assert.equal(replies(seen).length, ONBOARDING.length);
 });
 
+test('메신저에 로그인하기 전에는 공지가 오지 않는다', async () => {
+  const { actions, seen, run } = setup({ login: false, notices: ['[경무기획계] 회식 안내'] });
+
+  await run(600);
+  assert.equal(seen.length, 0, '로그인 전에는 공지도 쌓이지 않는다');
+
+  actions.authenticate('msg', 't2211', 'msg2211');
+  await run(101);
+  assert.equal(seen.filter((m) => m.cid === 'bot').length, 1, '로그인 100초 뒤 첫 공지');
+});
+
 test('메신저에 로그인하기 전에는 외부인이 오지 않는다', async () => {
   const { actions, state, run } = setup({ idleSec: 115, login: false });
 
@@ -397,6 +416,18 @@ test('본 뒤에 온 것만 미확인으로 센다', async () => {
 
   actions.markSeen('kang');
   assert.equal(view.unread('kang'), 0);
+});
+
+test('markActive는 유휴 시계를 되감는다', async () => {
+  // 메시지를 안 보내도 사람이 화면 앞에 있으면 외부인은 오지 않는다.
+  const { actions, state, run } = setup({ idleSec: 115 });
+  await run(110);
+  actions.markActive();
+  await run(110);
+  assert.equal(state.progress().story.outsider, 'hidden', '조작이 있으면 안 온다');
+
+  await run(10);
+  assert.equal(state.progress().story.outsider, 'live', '멈추면 그때부터 다시 잰다');
 });
 
 test('markSeen은 유휴 시계를 되감지 않는다', async () => {
