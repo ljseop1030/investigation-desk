@@ -9,6 +9,7 @@ const MARK = { [RECORD.MISSING]: '· ', [RECORD.LOCKED]: '● ', [RECORD.PENDING
 export function RecordsDb() {
   const { content, actions, view, recordStates } = useGame();
   const records = content.records;
+  const T = content.systems.db;
 
   const [sel, setSel] = useState(records[0]?.id);
   const [why, setWhy] = useState('');
@@ -60,11 +61,11 @@ export function RecordsDb() {
           {doc.category} {S.db.categorySuffix}
         </div>
 
-        {st === RECORD.MISSING && <div className="notice-box">{S.db.unregistered}</div>}
+        {st === RECORD.MISSING && <div className="notice-box">{T.unregistered}</div>}
 
         {st === RECORD.OPEN && <pre className="doc-body-mono">{view.recordBody(doc.id)}</pre>}
 
-        {st === RECORD.PENDING && <div className="notice-box">{S.db.pending}</div>}
+        {st === RECORD.PENDING && <div className="notice-box">{T.pending}</div>}
 
         {st === RECORD.LOCKED && (
           <div className="gate-box">
@@ -74,12 +75,12 @@ export function RecordsDb() {
               style={{ height: 56, resize: 'none' }}
               value={why}
               onChange={(e) => setWhy(e.target.value)}
-              placeholder={S.db.reasonPlaceholder}
+              placeholder={T.reasonPlaceholder}
             />
             <button className="btn btn-default" style={{ marginTop: 8 }} onClick={request}>
-              {S.db.requestButton}
+              {T.requestButton}
             </button>
-            <div className="gate-note">{S.db.logged}</div>
+            <div className="gate-note">{T.logged}</div>
           </div>
         )}
       </div>

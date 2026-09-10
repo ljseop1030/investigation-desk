@@ -1,5 +1,13 @@
-// UI 문구. 시나리오와 무관한 인터페이스 텍스트.
-// P9에서 여기만 번역하면 된다. 세계관 텍스트는 content/에 있다.
+// 앱 크롬. 시나리오를 통째로 갈아엎어도 그대로 남는 인터페이스 문구만 둔다.
+// P9에서 여기만 번역하면 된다.
+//
+// 여기 없는 것
+//   극중 시스템이 하는 말 (조회 신청, 반려 사유, 발신 전용 안내) → content/screen/systems.js
+//   세계관 사실 (자산번호, 내선번호, 기관명)                     → content/screen/terminal.js
+// 판별 질문은 하나다. 시나리오가 바뀌어도 이 문장이 그대로 남아도 되는가.
+//
+// 값은 전부 문자열이다. {name} 자리는 format.js의 fmt()가 채운다.
+// 여기에 함수를 다시 들이면 P9에서 파일을 통째로 넘길 수 없다.
 
 export default {
   common: {
@@ -19,8 +27,9 @@ export default {
     loading: '이전 작업 상태를 불러오는 중…',
   },
 
+  // 부팅 로그 자체는 단말이 하는 말이라 content/screen/terminal.js에 있다.
+  // 이 한 줄만 게임이 플레이어에게 하는 말이다.
   boot: {
-    preparing: '바탕화면을 준비하는 중…',
     skip: '화면을 누르면 건너뜁니다',
   },
 
@@ -28,75 +37,38 @@ export default {
     idPlaceholder: '아이디',
     pwPlaceholder: '비밀번호',
     failed: '아이디 또는 비밀번호가 올바르지 않습니다.',
-    failedCount: (n, max) =>
-      `아이디 또는 비밀번호가 올바르지 않습니다. (${n}/${max}회, ${max}회 실패 시 계정이 잠깁니다)`,
-    helpdesk: '계정 문의는 서무 담당(내선 3109)',
+    failedCount:
+      '아이디 또는 비밀번호가 올바르지 않습니다. ({n}/{max}회, {max}회 실패 시 계정이 잠깁니다)',
   },
 
   desktop: {
     hint: '바탕화면 아이콘을 두 번 눌러 실행하십시오.',
     resetConfirm: '저장된 진행 상황을 모두 지우고 처음부터 다시 시작합니다.',
-    terminal: (tag) => `AUX TERMINAL ${tag} / 대여`,
-    user: (name) => `USER ${name}`,
-    caseCount: (n) => `병행사건 ${n}건`,
   },
 
   polnet: {
-    posted: (team) => `${team} · 게시`,
+    posted: '{team} · 게시',
   },
 
   db: {
     allRecords: '전체 자료',
     categorySuffix: '자료',
-    unregistered:
-      '등록된 자료가 없습니다.\n해당 자료는 작성 담당자가 등록한 시점부터 조회할 수 있습니다.',
-    pending: '조회 신청이 접수되었습니다. 승인 대기 중입니다.',
-    reasonPlaceholder: '조회 사유 (사건번호 및 용도)',
-    requestButton: '조회 신청',
-    logged: '조회 이력은 계정별로 기록됩니다.',
   },
 
   collector: {
     listTitle: '배정된 양식',
-    listSubtitle: (team) => `${team} · 보조인력 계정`,
-    listGuide: '병행 중인 사건이 여러 건입니다. 자료를 옮겨 적기 전에 사건번호를 대조하십시오.',
     backToList: '← 양식 목록',
-    requestedBy: (who, due) => `요청 ${who}`,
-
-    statusDraft: (filled, total) => `작성 중 ${filled}/${total}`,
-    statusReview: '검토 중',
-    statusDone: '완료',
-    statusRejected: (n) => `반려 · 미비 ${n}건`,
-
-    reviewBanner: '제출됨. 검토 중입니다.',
-    acceptedTitle: '접수 완료',
-    acceptedBody: '정리표가 접수되었습니다. 수고하셨습니다.',
-    rejectedTitle: (n) => `반려 — 미비 ${n}건`,
-    rejectedBody: '표시된 항목을 보완하여 다시 제출하십시오.',
-
-    fieldBad: '미비',
-    fieldOk: '확인',
+    requestedBy: '요청 {who}',
   },
 
   messenger: {
     inputPlaceholder: '메시지 입력 (Enter 전송)',
     send: '전송',
-    typing: (name) => `${name} 님이 입력 중…`,
-    broadcastOnly:
-      '발신 전용 계정입니다. 회신할 수 없습니다.\n문의는 각 담당부서로 연락하시기 바랍니다.',
-    burned:
-      '이 대화 상대를 찾을 수 없습니다.\n등록되지 않은 계정과의 대화는 보관되지 않습니다.',
+    typing: '{name} 님이 입력 중…',
   },
 
   toast: {
     messageArrived: '메시지가 도착했습니다.',
-    dbRegistered: (title) => `수사자료 DB 등록: ${title}`,
-    dbApproved: (title) => `조회 승인: ${title}`,
-    requestReceived: '조회 신청이 접수되었습니다.',
-    formAccepted: (title) => `${title} 접수 완료`,
-    formRejected: (title, n) => `${title} 반려 — 미비 ${n}건`,
-    contactNotFound: '대화 상대를 찾을 수 없습니다.',
-    noticeAlwaysShown: '필수 공지는 매 부팅 시 표시됩니다.',
   },
 
   notice: {
@@ -106,5 +78,11 @@ export default {
   clock: {
     am: '오전',
     pm: '오후',
+  },
+
+  // 게임이 자기 자신에 대해 하는 말. 세계관 텍스트가 아니라 여기 있어야 한다.
+  // P4에서 참이 되고, P10에서 서버 세이브가 붙으면 다시 고친다.
+  meta: {
+    autosave: '진행 상황은 이 브라우저에 자동 저장됩니다.',
   },
 };

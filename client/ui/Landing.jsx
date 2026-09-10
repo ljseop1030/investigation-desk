@@ -29,7 +29,10 @@ export function Landing({ terminal, name, setName, hasSave, onContinue, onNew })
             <div className="landing-intro">
               {terminal.intro}
               {'\n\n'}
-              <span className="landing-footnote">{terminal.introFootnote}</span>
+              {/* 앞은 세계관 고지, 뒤는 게임이 자기 자신에 대해 하는 말. 출처가 다르다. */}
+              <span className="landing-footnote">
+                {terminal.introFootnote} {S.meta.autosave}
+              </span>
             </div>
             <button className="landing-back" onClick={() => setInfo(false)}>
               {S.common.back}

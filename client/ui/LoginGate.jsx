@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import S from './strings.js';
+import { fmt } from './format.js';
+import { useGame } from './GameProvider.jsx';
 
 const MAX_TRIES = 5;
 
@@ -7,6 +9,7 @@ const MAX_TRIES = 5;
 // 시스템명은 상자 밖 간판으로 둔다. 상자 안에 제목 막대를 세우면 창 제목 막대와
 // 똑같이 생겨서, 층이 둘로 읽히지 않고 창이 겹쳐 그려진 것처럼 보인다.
 export function LoginGate({ app, onSubmit }) {
+  const { content } = useGame();
   const [u, setU] = useState('');
   const [p, setP] = useState('');
   const [err, setErr] = useState('');
@@ -16,7 +19,7 @@ export function LoginGate({ app, onSubmit }) {
     if (onSubmit(u.trim(), p)) return;
     const n = tries + 1;
     setTries(n);
-    setErr(n >= 3 ? S.login.failedCount(n, MAX_TRIES) : S.login.failed);
+    setErr(n >= 3 ? fmt(S.login.failedCount, { n, max: MAX_TRIES }) : S.login.failed);
   };
 
   const onEnter = (e) => e.key === 'Enter' && go();
@@ -55,7 +58,7 @@ export function LoginGate({ app, onSubmit }) {
             {S.common.login}
           </button>
 
-          <div className="login-help">{S.login.helpdesk}</div>
+          <div className="login-help">{content.terminal.accountContact}</div>
         </div>
       </div>
     </div>
