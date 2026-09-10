@@ -12,14 +12,32 @@ const NOTE_Z = 10;
 const initIcons = (apps) =>
   Object.fromEntries(apps.map((a, i) => [a.id, { x: 16, y: 16 + i * 96 }]));
 
-const initNotes = (notes) =>
-  notes.map((n, i) => ({ ...n, r: n.pos.r, y: n.pos.y, z: NOTE_Z + i }));
+// 포스트잇에 적힌 계정은 앱에서 가져온다. 콘텐츠에 두 번 적지 않기 위해서다.
+const noteText = (app, memo) => {
+  const lines = app ? [app.private?.user, app.private?.pw].filter(Boolean).join('\n') : '';
+  return memo ? `${lines}\n\n${memo}` : lines;
+};
+
+// TODO(P4-save): 좌표를 배열 인덱스가 아니라 note.id로 들고 있을 것.
+// 콘텐츠에서 순서가 바뀌면 좌표가 엉뚱한 쪽지에 붙는다.
+const initNotes = (noteDefs, apps) =>
+  noteDefs.map((n, i) => {
+    const app = apps.find((a) => a.id === n.ref);
+    return {
+      ...n,
+      title: n.title ?? app?.short ?? app?.label ?? n.ref,
+      text: n.text ?? noteText(app, n.memo),
+      r: n.pos.r,
+      y: n.pos.y,
+      z: NOTE_Z + i,
+    };
+  });
 
 export function useScreen({ apps, notes: noteDefs }) {
   const [wins, setWins] = useState([]);
   const [top, setTop] = useState(null);
   const [icons, setIcons] = useState(() => initIcons(apps));
-  const [notes, setNotes] = useState(() => initNotes(noteDefs));
+  const [notes, setNotes] = useState(() => initNotes(noteDefs, apps));
   const [noteTop, setNoteTop] = useState(NOTE_Z + noteDefs.length);
 
   const maxZ = (ws) => (ws.length ? Math.max(...ws.map((w) => w.z)) : WIN_Z);

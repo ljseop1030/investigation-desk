@@ -204,6 +204,21 @@ pre { margin: 0; }
 }
 .icon.is-sel .icon-label { background: var(--title-a); color: #fff; }
 
+/* client/ui/style.css — 기존 .postit / .postit-bar / .postit-body 블록을 이것으로 교체.
+   색은 CSS에, 어느 색인지는 content/screen/notes.js의 tone에. */
+
+.postit {
+  position: absolute;
+  width: 150px;
+  user-select: none;
+  border: 1px solid var(--edge);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, .4);
+  background: var(--note-face);
+  color: var(--note-ink);
+}
+.postit.is-yellow { --note-face: #E8DFA8; --note-bar: #D9CC85; --note-ink: #2E2E28; }
+.postit.is-blue   { --note-face: #C6CFDA; --note-bar: #B0BCCB; --note-ink: #2A2F36; }
+
 .postit {
   position: absolute;
   width: 150px;
@@ -217,14 +232,15 @@ pre { margin: 0; }
   align-items: center;
   padding: 0 6px;
   cursor: move;
-  color: #3A3A32;
+  color: var(--note-ink);
   font-size: var(--fs-small);
+  background: var(--note-bar);
 }
 .postit-body {
   padding: 8px 10px 10px;
   font-size: var(--fs-body);
   line-height: 1.75;
-  color: #2E2E28;
+  color: var(--note-ink);
   white-space: pre-wrap;
 }
 
