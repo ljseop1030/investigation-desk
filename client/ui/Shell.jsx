@@ -10,9 +10,10 @@ const NOTICE_WIN = { id: '__notice', w: 500, h: 470 };
 
 // 바탕화면이 자리를 잡고 나서 뜬다. 즉시 띄우면 부팅이 끝나기도 전에
 // 창부터 있는 꼴이라, 단말이 켜지는 과정으로 읽히지 않는다.
-const NOTICE_DELAY = 1500;
+// 다만 기다림으로 느껴지면 안 된다. 한 박자면 충분하다.
+const NOTICE_DELAY = 700;
 
-export function Shell({ apps, notes, status, terminal, chatAppId, watching, savedScreen, screenRef, onReset }) {
+export function Shell({ apps, notes, status, terminal, chatAppId, watching, savedScreen, screenRef, onRestart, onQuit }) {
   const screen = useScreen({ apps, notes, saved: savedScreen });
   const [chatRequest, setChatRequest] = useState(null);
 
@@ -43,7 +44,8 @@ export function Shell({ apps, notes, status, terminal, chatAppId, watching, save
         icons={apps}
         status={status}
         screen={screen}
-        onReset={onReset}
+        onRestart={onRestart}
+        onQuit={onQuit}
         renderApp={(app) =>
           app.id === NOTICE_WIN.id ? (
             <DeviceNotice notice={terminal.deviceNotice} onClose={() => screen.close(NOTICE_WIN.id)} />
