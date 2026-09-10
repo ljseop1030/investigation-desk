@@ -44,7 +44,7 @@ export function Collector() {
       <div className="form-head">
         <div className="doc-title">{form.title}</div>
         {caseLabel(form) && <div className="form-meta">{caseLabel(form)}</div>}
-        <div className="form-meta">{S.collector.requestedBy(who(form.requester), form.due)}</div>
+        <div className="form-meta">{S.collector.requestedBy(who(form.requester))}</div>
       </div>
 
       <div className="form-guide">{form.guide}</div>
@@ -130,9 +130,7 @@ function FormList({ forms, formStates, draft, caseLabel, onOpen }) {
               <span>{f.title}</span>
               <span className={`form-card-status${done ? ' is-ok' : ''}`}>{label}</span>
             </div>
-            <div className="form-card-sub">
-              {[caseLabel(f), S.collector.deadline(f.due)].filter(Boolean).join(' · ')}
-            </div>
+            <div className="form-card-sub">{caseLabel(f)}</div>
           </button>
         );
       })}

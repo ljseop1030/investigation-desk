@@ -33,7 +33,6 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
           <div className="desk-status">
             <div>{S.desktop.terminal(status.assetTag)}</div>
             {status.user ? <div>{S.desktop.user(status.user)}</div> : null}
-            <div>{S.desktop.caseCount(status.caseCount)}</div>
           </div>
         )}
       </div>

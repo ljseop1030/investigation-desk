@@ -61,8 +61,7 @@ export default {
     listSubtitle: (team) => `${team} · 보조인력 계정`,
     listGuide: '병행 중인 사건이 여러 건입니다. 자료를 옮겨 적기 전에 사건번호를 대조하십시오.',
     backToList: '← 양식 목록',
-    requestedBy: (who, due) => `요청 ${who} · 기한 ${due}`,
-    deadline: (due) => `기한 ${due}`,
+    requestedBy: (who, due) => `요청 ${who}`,
 
     statusDraft: (filled, total) => `작성 중 ${filled}/${total}`,
     statusReview: '검토 중',
