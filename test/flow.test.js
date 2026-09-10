@@ -26,6 +26,11 @@ const CONTENT = {
       private: { fallback: ['.'] },
     },
     {
+      id: 'baek', name: '백유림',
+      style: { read: [4, 15], reply: [15, 45], burst: false, burstWait: 0, bubbles: [1, 3], tailGap: 0 },
+      private: { fallback: ['아 넵! 확인해볼게요'] },
+    },
+    {
       id: 'kim', name: '김주원',
       style: { read: [20, 20], reply: [20, 20], burst: false, burstWait: 0, bubbles: [2, 3], tailGap: 150 },
       private: { fallback: ['이런 것까지 나한테 물어봐요?'] },
@@ -48,14 +53,21 @@ const CONTENT = {
       },
     },
   },
-  apps: [{ id: 'polnet', private: { user: 't-2211', pw: 'Pol!2211' } }],
+  apps: [
+    { id: 'polnet', private: { user: 't-2211', pw: 'Pol!2211' } },
+    { id: 'msg', private: { user: 't2211', pw: 'msg2211' } },
+  ],
 };
 
 // idleSec 기본값을 크게 둬서 K가 끼어들지 않게 한다.
 // 답장을 기다리는 것도 '아무것도 안 하는' 상태라, 그냥 두면 K가 나타나 말풍선이 섞인다.
-const setup = ({ reply, idleSec = 999999 } = {}) => {
+// onboarding은 픽스처에서 붙였다 뗀다. 대부분의 테스트는 첫 인사가 없는 쪽을 본다.
+const setup = ({ reply, idleSec = 999999, login = true, onboarding = null } = {}) => {
   const content = {
     ...CONTENT,
+    characters: CONTENT.characters.map((c) =>
+      onboarding && c.id === 'baek' ? { ...c, onboarding } : c
+    ),
     story: {
       ...CONTENT.story,
       outsiderAppears: { ...CONTENT.story.outsiderAppears, afterIdleSec: idleSec },
@@ -68,9 +80,9 @@ const setup = ({ reply, idleSec = 999999 } = {}) => {
   const view = createView({ state, content });
   const events = createEvents();
   const seen = [];
-  const typing = []; 
+  const typing = [];
   events.on('message', (m) => seen.push(m));
-  events.on('typing', (x) => typing.push(x)); 
+  events.on('typing', (x) => typing.push(x));
 
   const actions = createActions({
     content, state, scheduler, events, clock,
@@ -81,7 +93,11 @@ const setup = ({ reply, idleSec = 999999 } = {}) => {
       story: createStoryRules(content.story, content.characters, { random: () => 0 }),
     },
     ai: { reply: reply ?? (async () => ({ messages: ['이거예요~', '확인해보세요 ^^'] })) },
+    chatApp: 'msg',
   });
+
+  // 메신저 로그인이 시작 신호다. 대부분의 테스트는 그 뒤를 본다.
+  if (login) actions.authenticate('msg', 't2211', 'msg2211');
 
   // 1초씩 감으면서 tick을 돌린다. 실제 게임의 1초 tick과 같은 모양.
   const run = async (sec) => {
@@ -272,9 +288,47 @@ test('비밀번호가 맞아야 로그인된다', () => {
 });
 
 test('없는 앱은 로그인되지 않는다', () => {
-  const { actions, state } = setup();
+  const { actions, state } = setup({ login: false });
   assert.equal(actions.authenticate('없는앱', 'x', 'y'), false);
   assert.deepEqual(state.progress().authed, {});
+});
+
+const ONBOARDING = [
+  '안녕하세요! 사무보조 인턴 지원해주셔서 감사합니다.',
+  '앞으로 잘 부탁드려요!',
+];
+
+test('메신저에 로그인하면 사수가 먼저 말을 건다', async () => {
+  const { actions, seen, run } = setup({ login: false, onboarding: ONBOARDING });
+
+  await run(30);
+  assert.equal(seen.length, 0, '로그인 전에는 아무 말도 없다');
+
+  actions.authenticate('msg', 't2211', 'msg2211');
+  await run(5);
+
+  assert.deepEqual(replies(seen).map((m) => m.text), ONBOARDING);
+  assert.equal(replies(seen).at(-1).last, true, '마지막 줄에만 토스트가 붙는다');
+});
+
+test('첫 인사는 한 번만 온다', async () => {
+  const { actions, seen, run } = setup({ login: true, onboarding: ONBOARDING });
+  await run(5);
+
+  actions.authenticate('msg', 't2211', 'msg2211');
+  await run(5);
+  assert.equal(replies(seen).length, ONBOARDING.length);
+});
+
+test('메신저에 로그인하기 전에는 외부인이 오지 않는다', async () => {
+  const { actions, state, run } = setup({ idleSec: 115, login: false });
+
+  await run(400);
+  assert.equal(state.progress().story.outsider, 'hidden', '로그인 전에는 조용하다');
+
+  actions.authenticate('msg', 't2211', 'msg2211');
+  await run(400);
+  assert.equal(state.progress().story.outsider, 'live', '로그인하면 그때부터 잰다');
 });
 
 /* ---------- 미확인 ---------- */

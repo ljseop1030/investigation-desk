@@ -1,12 +1,19 @@
 import { TRAIT } from '../shared/enums.js';
 
-export function createActions({ content, state, scheduler, events, rules, clock, ai }) {
+export function createActions({ content, state, scheduler, events, rules, clock, ai, chatApp }) {
   const { chat, records, forms, story, notices } = rules;
   const charById = new Map(content.characters.map((c) => [c.id, c]));
   const formById = new Map(content.forms.map((f) => [f.id, f]));
   const p = () => state.progress();
 
   const has = (c, trait) => (c.traits || []).includes(trait);
+
+  // 알림도 외부인도 대화창 안에서 벌어지는 일이다. 계정이 열리기 전에는
+  // 아무도 말을 걸지 않는다. 로그인이 이 게임의 시작 신호다.
+  const chatOpen = () => !!p().authed[chatApp];
+
+  // 첫 인사를 맡은 사람. 원 화의 script처럼, 필드가 있으면 그 역할이다.
+  const greeter = content.characters.find((c) => c.onboarding?.length);
   const log = (cid) => (p().chats[cid] ||= []);
 
   const arrive = (cid, text, at, extra = {}) =>
@@ -43,7 +50,19 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     state.touch(clock.now());
     p().authed[appId] = true;
     events.emit('app:authed', { appId });
+    if (appId === chatApp) greet(clock.now());
     return true;
+  }
+
+  // 사수의 첫 인사. 한 번만. 말풍선 간격은 평소 답장과 같은 계산을 쓴다.
+  // 첫 인사라고 다른 리듬으로 올 이유가 없다.
+  function greet(now) {
+    if (!greeter || p().story.greeted) return;
+    p().story.greeted = true;
+    const lines = greeter.onboarding;
+    chat.bubbleTimes(greeter.style, lines, now).forEach((b, i) =>
+      arrive(greeter.id, b.text, b.at, { lead: b.lead, last: i === lines.length - 1 })
+    );
   }
 
   // touch()를 부르지 않는다. UI가 자동으로 부르는 함수라
@@ -231,8 +250,10 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       handlers[e.kind]?.(e);
     }
     const now = clock.now();
-    if (story.outsiderDue(p().lastActAt, now)) summonOutsider();
-    scheduleNotice(now);
+    if (chatOpen()) {
+      if (story.outsiderDue(p().lastActAt, now)) summonOutsider();
+      scheduleNotice(now);
+    }
     syncTyping(now);
   }
 
