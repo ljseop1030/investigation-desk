@@ -1,0 +1,3 @@
+[submodule "content"]
+	path = content
+	url = https://github.com/ljseop1030/investigation-desk-content.git
