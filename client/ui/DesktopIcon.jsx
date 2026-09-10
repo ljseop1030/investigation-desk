@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { SANS } from './style.js';
 import { startDrag } from './drag.js';
 
 export function DesktopIcon({ app, pos, selected, onSelect, onOpen, onMove }) {
@@ -25,31 +24,11 @@ export function DesktopIcon({ app, pos, selected, onSelect, onOpen, onMove }) {
       onMouseDown={start}
       onTouchStart={start}
       onDoubleClick={onOpen}
-      style={{
-        position: 'absolute',
-        left: pos.x,
-        top: pos.y,
-        width: 94,
-        padding: '8px 4px 6px',
-        background: selected ? 'rgba(90,130,160,.38)' : 'transparent',
-        border: selected ? '1px dotted #9FB6C4' : '1px solid transparent',
-        cursor: 'pointer',
-        textAlign: 'center',
-        userSelect: 'none',
-        fontFamily: SANS,
-      }}
+      className={`icon${selected ? ' is-sel' : ''}`}
+      style={{ left: pos.x, top: pos.y }}
     >
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{app.icon}</div>
-      <div
-        style={{
-          fontSize: 11.5,
-          color: '#E2EAEF',
-          lineHeight: 1.35,
-          textShadow: '0 1px 3px rgba(0,0,0,.8)',
-        }}
-      >
-        {app.label}
-      </div>
+      <div className="icon-art">{app.icon}</div>
+      <div className="icon-label">{app.label}</div>
     </div>
   );
 }

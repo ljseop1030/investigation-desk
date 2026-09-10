@@ -5,20 +5,24 @@ import { useState } from 'react';
 
 const OFFSET = { x: 150, y: 50, step: 40, stepY: 34 };
 
+// 창은 언제나 포스트잇 위에 있다. 같은 z 대역에서 다투게 두면 순서가 뒤집힌다.
+const WIN_Z = 1000;
+const NOTE_Z = 10;
+
 const initIcons = (apps) =>
   Object.fromEntries(apps.map((a, i) => [a.id, { x: 16, y: 16 + i * 96 }]));
 
 const initNotes = (notes) =>
-  notes.map((n, i) => ({ ...n, r: n.pos.r, y: n.pos.y, z: 300 + i }));
+  notes.map((n, i) => ({ ...n, r: n.pos.r, y: n.pos.y, z: NOTE_Z + i }));
 
 export function useScreen({ apps, notes: noteDefs }) {
   const [wins, setWins] = useState([]);
   const [top, setTop] = useState(null);
   const [icons, setIcons] = useState(() => initIcons(apps));
   const [notes, setNotes] = useState(() => initNotes(noteDefs));
-  const [noteTop, setNoteTop] = useState(300 + noteDefs.length);
+  const [noteTop, setNoteTop] = useState(NOTE_Z + noteDefs.length);
 
-  const maxZ = (ws) => (ws.length ? Math.max(...ws.map((w) => w.z)) : 0);
+  const maxZ = (ws) => (ws.length ? Math.max(...ws.map((w) => w.z)) : WIN_Z);
 
   const focus = (id) => {
     setTop(id);

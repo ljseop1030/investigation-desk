@@ -1,4 +1,3 @@
-// 임시. P3에서 재수정
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as content from './content-loader.js';
@@ -13,6 +12,7 @@ import { createRecordRules } from '../core/rules/records.js';
 import { createFormRules } from '../core/rules/forms.js';
 import { createStoryRules } from '../core/rules/story.js';
 import { createNoticeRules } from '../core/rules/notices.js';
+import './ui/style.css';
 import { GameProvider } from './ui/GameProvider.jsx';
 import { Boot } from './ui/Boot.jsx';
 import { Landing } from './ui/Landing.jsx';

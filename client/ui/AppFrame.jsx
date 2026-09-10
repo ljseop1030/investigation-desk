@@ -18,5 +18,5 @@ export function AppFrame({ app, chatRequest, watching }) {
   if (app.id === 'form') return <Collector />;
   if (app.id === 'msg') return <Messenger chatRequest={chatRequest} watching={watching} />;
 
-  return <div style={{ padding: 20, fontSize: 13 }}>{app.title}</div>;
+  return <div className="doc-pane">{app.title}</div>;
 }

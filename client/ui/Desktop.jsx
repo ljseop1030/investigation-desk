@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { C, SANS, MONO } from './style.js';
 import S from './strings.js';
 import { iconFor } from './icons.jsx';
 import { Window } from './Window.jsx';
@@ -13,18 +12,10 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
   const shown = icons ?? apps;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: `radial-gradient(circle at 28% -10%, #22303A, ${C.screen} 68%)`,
-        overflow: 'hidden',
-        fontFamily: SANS,
-      }}
-    >
+    <div className="desk on-dark">
       <div
+        className="desk-layer"
         onMouseDown={(e) => e.target === e.currentTarget && setSelIcon(null)}
-        style={{ position: 'absolute', inset: 0 }}
       >
         {shown.map((a) => (
           <DesktopIcon
@@ -39,20 +30,9 @@ export function Desktop({ apps, icons, status, screen: sc, renderApp, onReset })
         ))}
 
         {status && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 16,
-              bottom: 54,
-              color: '#586873',
-              fontSize: 10.5,
-              lineHeight: 1.75,
-              fontFamily: MONO,
-            }}
-          >
+          <div className="desk-status">
             <div>{S.desktop.terminal(status.assetTag)}</div>
             {status.user ? <div>{S.desktop.user(status.user)}</div> : null}
-            <div>{S.desktop.caseCount(status.caseCount)}</div>
           </div>
         )}
       </div>

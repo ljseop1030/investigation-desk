@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { RECORD } from '../../core/view.js';
-import { C, MONO, SANS, btnPrimary } from './style.js';
 import S from './strings.js';
 import { useGame } from './GameProvider.jsx';
 
-const MARK = { [RECORD.MISSING]: '· ', [RECORD.LOCKED]: '🔒 ', [RECORD.PENDING]: '🔒 ' };
+// 미등록은 점 하나, 제한열람은 자물쇠. 이모지 대신 글자로 둔다.
+const MARK = { [RECORD.MISSING]: '· ', [RECORD.LOCKED]: '● ', [RECORD.PENDING]: '● ' };
 
 export function RecordsDb() {
   const { content, actions, view, recordStates } = useGame();
@@ -24,15 +24,13 @@ export function RecordsDb() {
   };
 
   return (
-    <div style={{ display: 'flex', width: '100%', fontSize: 13 }}>
-      <div style={{ width: 186, borderRight: `1px solid ${C.line}`, background: '#EDEFF1', overflowY: 'auto' }}>
-        <div style={{ padding: '8px 10px', fontSize: 11, color: C.inkSoft, borderBottom: `1px solid ${C.line}` }}>
-          {S.db.allRecords}
-        </div>
+    <div className="split">
+      <div className="list-pane">
+        <div className="list-head px">{S.db.allRecords}</div>
 
         {cats.map((cat) => (
           <div key={cat}>
-            <div style={{ padding: '8px 10px 4px', fontSize: 11, color: C.inkSoft }}>{cat}</div>
+            <div className="list-group px">{cat}</div>
             {records
               .filter((r) => r.category === cat)
               .map((r) => (
@@ -42,19 +40,11 @@ export function RecordsDb() {
                     setSel(r.id);
                     setWhy('');
                   }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '6px 10px 6px 16px',
-                    border: 'none',
-                    borderLeft: sel === r.id ? `3px solid ${C.bar}` : '3px solid transparent',
-                    background: sel === r.id ? '#fff' : 'transparent',
-                    color: recordStates[r.id] === RECORD.MISSING ? C.hint : C.ink,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                    fontFamily: SANS,
-                  }}
+                  className={
+                    'list-item' +
+                    (sel === r.id ? ' is-sel' : '') +
+                    (recordStates[r.id] === RECORD.MISSING ? ' is-dim' : '')
+                  }
                 >
                   {MARK[recordStates[r.id]] ?? ''}
                   {r.title}
@@ -64,60 +54,32 @@ export function RecordsDb() {
         ))}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-        <div style={{ fontSize: 15, marginBottom: 2 }}>{doc.title}</div>
-        <div style={{ fontSize: 11, color: C.inkSoft, marginBottom: 14 }}>
+      <div className="doc-pane">
+        <div className="doc-title">{doc.title}</div>
+        <div className="doc-meta">
           {doc.category} {S.db.categorySuffix}
         </div>
 
-        {st === RECORD.MISSING && (
-          <div
-            style={{
-              padding: 16,
-              border: `1px dashed ${C.line}`,
-              color: C.inkSoft,
-              lineHeight: 1.9,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {S.db.unregistered}
-          </div>
-        )}
+        {st === RECORD.MISSING && <div className="notice-box">{S.db.unregistered}</div>}
 
-        {st === RECORD.OPEN && (
-          <pre style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.9, whiteSpace: 'pre-wrap', margin: 0 }}>
-            {view.recordBody(doc.id)}
-          </pre>
-        )}
+        {st === RECORD.OPEN && <pre className="doc-body-mono">{view.recordBody(doc.id)}</pre>}
 
-        {st === RECORD.PENDING && (
-          <div style={{ padding: 14, border: `1px dashed ${C.line}`, color: C.inkSoft }}>
-            {S.db.pending}
-          </div>
-        )}
+        {st === RECORD.PENDING && <div className="notice-box">{S.db.pending}</div>}
 
         {st === RECORD.LOCKED && (
-          <div style={{ padding: 14, border: `1px solid ${C.line}`, background: '#fff' }}>
-            <div style={{ color: C.alert, marginBottom: 10 }}>{doc.reason}</div>
+          <div className="gate-box">
+            <div className="gate-reason">{doc.reason}</div>
             <textarea
+              className="field"
+              style={{ height: 56, resize: 'none' }}
               value={why}
               onChange={(e) => setWhy(e.target.value)}
               placeholder={S.db.reasonPlaceholder}
-              style={{
-                width: '100%',
-                height: 56,
-                border: `1px solid ${C.line}`,
-                padding: 8,
-                fontSize: 12.5,
-                fontFamily: SANS,
-                resize: 'none',
-                boxSizing: 'border-box',
-              }}
             />
-            <button onClick={request} style={{ ...btnPrimary, marginTop: 8 }}>
+            <button className="btn btn-default" style={{ marginTop: 8 }} onClick={request}>
               {S.db.requestButton}
             </button>
-            <div style={{ fontSize: 10.5, color: C.inkSoft, marginTop: 8 }}>{S.db.logged}</div>
+            <div className="gate-note">{S.db.logged}</div>
           </div>
         )}
       </div>
