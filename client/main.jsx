@@ -22,7 +22,8 @@ import { Shell } from './ui/Shell.jsx';
 
 const TEMPO = 10;   // 개발 중 배속
 
-// 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 한다.
+// 대화를 담는 앱. 토스트가 어느 창을 열어야 하는지 알아야 하고,
+// core는 여기에 로그인해야 알림·외부인 시계를 돌린다.
 const CHAT_APP = 'msg';
 
 const clock = createClock();
@@ -36,6 +37,10 @@ const scheduler = createScheduler(clock, restore(saved?.scheduler ?? [], clock.n
 
 // AI 호출 중에 끊긴 대화. 내 말은 되찾아뒀고 답장만 다시 잡아준다.
 state.interrupted().forEach((cid) => scheduler.add('reply', clock.now() + 2500, { cid }));
+
+// 자리를 비운 시간은 유휴가 아니다. 유휴 시계는 이 세션이 시작되는 지금부터 잰다.
+state.touch(clock.now());
+
 const view = createView({ state, content });
 const events = createEvents();
 
@@ -51,6 +56,7 @@ const actions = createActions({
   },
   // P5까지는 fallback 대사로 돈다
   ai: { reply: async () => { throw new Error('no ai yet'); } },
+  chatApp: CHAT_APP,
 });
 
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
