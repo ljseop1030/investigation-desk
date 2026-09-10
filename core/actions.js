@@ -49,8 +49,9 @@ export function createActions({ content, state, scheduler, events, rules, clock,
   // touch()를 부르지 않는다. UI가 자동으로 부르는 함수라
   // 유휴 시계가 되감기면 외부인이 영영 안 나타난다.
   function markSeen(cid) {
-    p().seenAt[cid] = clock.now();
-    events.emit('chat:seen', { cid });
+    const at = clock.now();
+    p().seenAt[cid] = at;
+    events.emit('chat:seen', { cid, at });
   }
 
   function requestRecord(recordId, reason) {

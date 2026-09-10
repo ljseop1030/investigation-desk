@@ -32,6 +32,10 @@ export function createView({ state, content }) {
     chats: () => clone(p().chats),
     chat: (cid) => clone(p().chats[cid] ?? []),
 
+    // UI가 뱃지를 셀 때 쓸 기준선. 이게 없으면 복원 직후 지난 대화가
+    // 전부 미확인으로 잡힌다.
+    seenAt: () => clone(p().seenAt),
+
     // 뱃지는 저장하지 않고 seenAt에서 센다.
     unread(cid) {
       const since = p().seenAt[cid] ?? 0;

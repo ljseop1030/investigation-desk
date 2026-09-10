@@ -29,7 +29,7 @@ export function GameProvider({ actions, view, events, content, watching, childre
   );
   const [chats, setChats] = useState(() => view.chats());
   const [typing, setTyping] = useState({});
-  const [seenAt, setSeenAt] = useState({});
+  const [seenAt, setSeenAt] = useState(() => view.seenAt());
   const [outsider, setOutsider] = useState(() => view.outsider());
   const timer = useRef(null);
 
@@ -96,7 +96,7 @@ export function GameProvider({ actions, view, events, content, watching, childre
 
       events.on('typing', ({ cid, on }) => setTyping((t) => ({ ...t, [cid]: on }))),
 
-      events.on('chat:seen', ({ cid }) => setSeenAt((s) => ({ ...s, [cid]: Date.now() }))),
+      events.on('chat:seen', ({ cid, at }) => setSeenAt((s) => ({ ...s, [cid]: at }))),
 
       events.on('character:appeared', () => setOutsider('live')),
 
