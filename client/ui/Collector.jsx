@@ -5,14 +5,16 @@ import { fmt } from './format.js';
 import { useGame } from './GameProvider.jsx';
 
 export function Collector() {
-  const { content, actions, formStates } = useGame();
+  const { content, actions, view, formStates } = useGame();
   const forms = content.forms;
   const T = content.systems.form;
 
   const [open, setOpen] = useState(null);
-  // 작성 중인 값은 UI가 들고 있는다. core는 제출 순간에만 받는다.
-  // 새로고침하면 날아간다. 저장할지는 P4.
-  const [draft, setDraft] = useState({});
+  // 화면은 UI가 들고 그린다. 같은 값을 core에도 넘겨 저장되게 한다.
+  // 관공서 양식이 새로고침으로 날아가는 건 농담이 아니라 오류다.
+  const [draft, setDraft] = useState(() =>
+    Object.fromEntries(forms.map((f) => [f.id, view.form(f.id)?.draft ?? {}]))
+  );
 
   const caseLabel = (form) => {
     const c = content.cases.find((x) => x.id === form.case);
@@ -34,8 +36,11 @@ export function Collector() {
   const locked = st.status === STATUS.REVIEW || (st.status === STATUS.DONE && marks.pass);
   const values = draft[form.id] ?? {};
 
-  const setField = (fid, text) =>
-    setDraft((d) => ({ ...d, [form.id]: { ...(d[form.id] ?? {}), [fid]: text } }));
+  const setField = (fid, text) => {
+    const next = { ...values, [fid]: text };
+    setDraft((d) => ({ ...d, [form.id]: next }));
+    actions.saveDraft(form.id, next);
+  };
 
   return (
     <div className="form-pane">

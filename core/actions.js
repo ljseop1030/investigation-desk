@@ -63,10 +63,20 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     return true;
   }
 
+  // 작성 중인 값. 제출 전에도 살아남아야 한다.
+  // 이벤트를 쏘지 않는다. 화면은 이미 그 값을 들고 있고,
+  // 타자 한 번에 렌더를 한 바퀴 돌릴 이유가 없다.
+  function saveDraft(formId, values) {
+    const entry = (p().forms[formId] ||= { values: null, status: 'draft', marks: null, draft: {} });
+    entry.draft = values;
+    state.touch(clock.now());
+  }
+
   function submitForm(formId, values) {
     const now = clock.now();
     state.touch(now);
-    p().forms[formId] = { values, status: 'review', marks: null };
+    // draft를 남긴다. 반려된 뒤 고쳐 쓸 값이 사라지면 안 된다.
+    p().forms[formId] = { ...p().forms[formId], values, draft: values, status: 'review', marks: null };
 
     if (story.leaksInReport(formId, values, p().story.provided)) burn('report');
 
@@ -225,5 +235,5 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     syncTyping(now);
   }
 
-  return { send, authenticate, markSeen, requestRecord, submitForm, tick, summonOutsider };
+  return { send, authenticate, markSeen, requestRecord, saveDraft, submitForm, tick, summonOutsider };
 }
