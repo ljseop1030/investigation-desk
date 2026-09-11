@@ -56,3 +56,41 @@ test('답장 예약이 있으면 다시 잡지 않는다', () => {
   const already = s.has((e) => e.kind === 'reply' && e.cid === 'kang');
   assert.equal(already, true);
 });
+
+/* ---------- 복원 ---------- */
+
+test('복원한 예약의 뒤 번호부터 발급한다', () => {
+  const c = fakeClock(0);
+  const s = createScheduler(c, [
+    { id: 'read:3', kind: 'read', at: 500 },
+    { id: 'push:7', kind: 'push', at: 900 },
+  ]);
+  const id = s.add('reply', 1000, { cid: 'kang' });
+  assert.equal(id, 'reply:8');
+  assert.equal(new Set(s.pending().map((e) => e.id)).size, 3);   // id가 겹치지 않는다
+});
+
+test('id 없는 예약이 섞여도 번호 매기기가 안 깨진다', () => {
+  const c = fakeClock(0);
+  const s = createScheduler(c, [{ kind: 'push', at: 100 }]);
+  assert.equal(s.add('read', 200, {}), 'read:1');
+});
+
+test('끊긴 대화의 답장을 지난 예약으로 넣으면 catchUp이 민다', () => {
+  const c = fakeClock(50000);
+  const s = createScheduler(c);
+  s.add('reply', 0, { cid: 'kang' });   // beginSession이 거는 모양
+  s.catchUp();
+  assert.equal(s.pending()[0].at, 50000 + 2500);
+});
+
+test('catchUp은 종류마다 다른 만큼 민다', () => {
+  const c = fakeClock(1000);
+  const s = createScheduler(c, [
+    { kind: 'read', at: 1 },
+    { kind: 'unlock', at: 2 },
+    { kind: 'grade', at: 3 },
+  ]);
+  s.catchUp();
+  assert.deepEqual(s.pending().map((e) => e.at), [1800, 4000, 4000]);
+});
