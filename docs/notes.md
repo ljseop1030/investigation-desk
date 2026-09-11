@@ -709,6 +709,55 @@ id 충돌 없음      복원 후 새 예약이 기존 뒤 번호로 발급
 
 ---
 
+### 6 들어가기 전. 배포 준비 — `chore/p4-deploy-prep`
+
+워크플로 없이 고칠 수 있는 것만. 전부 로컬에서 검증된다.
+
+- **`index.html`** — `lang="ko"`, 제목, 없는 `favicon.svg` 참조 제거
+  (`public/`이 아예 없었다). `color-scheme: dark` 한 줄 추가 — 첫 페인트에
+  흰 화면이 한 프레임 번쩍였다
+- **`.nvmrc`** — `24`. `ci.yml`도 `node-version-file`로 바꿨다. 안 바꾸면
+  `.nvmrc`는 아무도 안 읽는 장식이 되고 진실이 셋이 된다.
+  `package.json`의 `engines: ">=22"`는 하한이라 역할이 다르니 남긴다
+- **`.env.example`** — `VITE_TEMPO`. P5에서 키가 붙는다
+- **`scripts/check-content.js`** — 아래
+
+#### 콘텐츠 확인을 빌드 앞으로
+
+로더 가드(P4-6)는 런타임이라 `vite build`가 여전히 성공한다. 조용한 실패를
+CI에서 드러내려면 빌드 **전에** 봐야 한다.
+
+`npm run check:content`는 `content-loader.js`가 읽는 것과 같은 목록을 파일
+시스템에서 확인하고, 없는 것의 이름을 찍는다. 서브모듈이 통째로 빠진 경우와
+한 파일만 어긋난 경우가 출력에서 구분된다.
+
+> **`check`에 묶지 않았다.** CI는 콘텐츠 없이 도는 게 정상이고, 묶으면 CI가
+> 항상 빨간불이다. 부르는 곳은 배포 job 하나뿐이다.
+
+목록이 두 군데(`content-loader.js`와 이 스크립트)에 있다. 한쪽을 고치면 다른
+쪽도 고쳐야 한다. 하나로 합치려면 로더를 Node에서 부를 수 있어야 하는데
+`import.meta.glob`이 vite 전용이라 지금은 안 된다.
+
+#### 안 한 것
+
+- **`adapters/storage/server.js` 0바이트.** 지울지 표식을 넣을지 보다가 그냥
+  뒀다. P10 예약석이다. `local.js` 옆에 서 있는 게 갈림길을 보여주기도 한다
+- **폰트 자가 호스팅.** `style.css` 첫 줄이 아직 `galmuri@latest`를
+  jsdelivr에서 받는다. 배포된 URL이 남의 릴리스에 묶이지만, 혼자 쓰는
+  URL이고 깜빡임은 견딜 만하다. **P6으로 미룬다** (P3.5·P4-5 항목)
+
+#### 확인
+
+```
+npm run check:content    → 콘텐츠 확인 완료
+npm run build            → 83 modules, gzip 95 kB
+```
+
+**modules 수가 증거 하나다.** 서브모듈이 비면 글로브가 빈 객체를 돌려주면서
+이 숫자가 뚝 떨어진다.
+
+---
+
 ### 6. 배포 — `chore/p4-deploy`
 
 **호스팅 미정. Netlify 우선 검토.**
