@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createScheduler, restore } from '../core/scheduler.js';
+import { createScheduler } from '../core/scheduler.js';
 
 const fakeClock = (start = 0) => {
   let t = start;
@@ -36,17 +36,16 @@ test('같은 tick에 여럿 만기되면 시각 순', () => {
 });
 
 test('복원: 지난 push만 간격이 벌어진다', () => {
-  const now = 10000;
-  const out = restore(
-    [
-      { kind: 'push', at: 1 },
-      { kind: 'push', at: 2 },
-      { kind: 'push', at: 99999 },
-    ],
-    now
-  );
-  assert.equal(out[0].at, now + 1500);
-  assert.equal(out[1].at, now + 1500 + 1400);
+  const c = fakeClock(10000);
+  const s = createScheduler(c, [
+    { kind: 'push', at: 1 },
+    { kind: 'push', at: 2 },
+    { kind: 'push', at: 99999 },
+  ]);
+  s.catchUp();
+  const out = s.pending();
+  assert.equal(out[0].at, 10000 + 1500);
+  assert.equal(out[1].at, 10000 + 1500 + 1400);
   assert.equal(out[2].at, 99999);
 });
 

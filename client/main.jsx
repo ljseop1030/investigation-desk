@@ -5,7 +5,7 @@ import { createClock } from '../adapters/clock.js';
 import { createLocalStorage } from '../adapters/storage/local.js';
 import { createAutosave } from './save.js';
 import { watchActivity } from './activity.js';
-import { createScheduler, restore } from '../core/scheduler.js';
+import { createScheduler } from '../core/scheduler.js';
 import { createState, SAVE_VERSION } from '../core/state.js';
 import { createView } from '../core/view.js';
 import { createEvents } from '../core/events.js';
@@ -62,7 +62,10 @@ const saved = storage.load();
 const hasSave = saved?.v === SAVE_VERSION;
 
 const state = createState(saved);
-const scheduler = createScheduler(clock, restore(saved?.scheduler ?? [], clock.now()));
+const scheduler = createScheduler(clock, saved?.scheduler ?? []);
+
+// 자리를 비운 사이 만기된 예약을 지금부터 몇 초 뒤로 당긴다.
+scheduler.catchUp();
 
 // AI 호출 중에 끊긴 대화. 내 말은 되찾아뒀고 답장만 다시 잡아준다.
 state.interrupted().forEach((cid) => scheduler.add('reply', clock.now() + 2500, { cid }));
