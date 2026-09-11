@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createScheduler, restore } from '../core/scheduler.js';
+import { createScheduler } from '../core/scheduler.js';
 
 const fakeClock = (start = 0) => {
   let t = start;
@@ -36,17 +36,16 @@ test('같은 tick에 여럿 만기되면 시각 순', () => {
 });
 
 test('복원: 지난 push만 간격이 벌어진다', () => {
-  const now = 10000;
-  const out = restore(
-    [
-      { kind: 'push', at: 1 },
-      { kind: 'push', at: 2 },
-      { kind: 'push', at: 99999 },
-    ],
-    now
-  );
-  assert.equal(out[0].at, now + 1500);
-  assert.equal(out[1].at, now + 1500 + 1400);
+  const c = fakeClock(10000);
+  const s = createScheduler(c, [
+    { kind: 'push', at: 1 },
+    { kind: 'push', at: 2 },
+    { kind: 'push', at: 99999 },
+  ]);
+  s.catchUp();
+  const out = s.pending();
+  assert.equal(out[0].at, 10000 + 1500);
+  assert.equal(out[1].at, 10000 + 1500 + 1400);
   assert.equal(out[2].at, 99999);
 });
 
@@ -56,4 +55,42 @@ test('답장 예약이 있으면 다시 잡지 않는다', () => {
   s.add('reply', 900000, { cid: 'kang' });
   const already = s.has((e) => e.kind === 'reply' && e.cid === 'kang');
   assert.equal(already, true);
+});
+
+/* ---------- 복원 ---------- */
+
+test('복원한 예약의 뒤 번호부터 발급한다', () => {
+  const c = fakeClock(0);
+  const s = createScheduler(c, [
+    { id: 'read:3', kind: 'read', at: 500 },
+    { id: 'push:7', kind: 'push', at: 900 },
+  ]);
+  const id = s.add('reply', 1000, { cid: 'kang' });
+  assert.equal(id, 'reply:8');
+  assert.equal(new Set(s.pending().map((e) => e.id)).size, 3);   // id가 겹치지 않는다
+});
+
+test('id 없는 예약이 섞여도 번호 매기기가 안 깨진다', () => {
+  const c = fakeClock(0);
+  const s = createScheduler(c, [{ kind: 'push', at: 100 }]);
+  assert.equal(s.add('read', 200, {}), 'read:1');
+});
+
+test('끊긴 대화의 답장을 지난 예약으로 넣으면 catchUp이 민다', () => {
+  const c = fakeClock(50000);
+  const s = createScheduler(c);
+  s.add('reply', 0, { cid: 'kang' });   // beginSession이 거는 모양
+  s.catchUp();
+  assert.equal(s.pending()[0].at, 50000 + 2500);
+});
+
+test('catchUp은 종류마다 다른 만큼 민다', () => {
+  const c = fakeClock(1000);
+  const s = createScheduler(c, [
+    { kind: 'read', at: 1 },
+    { kind: 'unlock', at: 2 },
+    { kind: 'grade', at: 3 },
+  ]);
+  s.catchUp();
+  assert.deepEqual(s.pending().map((e) => e.at), [1800, 4000, 4000]);
 });

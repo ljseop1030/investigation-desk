@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createLocalStorage } from '../adapters/storage/local.js';
 import { createAutosave } from './save.js';
 import { watchActivity } from './activity.js';
-import { createScheduler, restore } from '../core/scheduler.js';
+import { createScheduler } from '../core/scheduler.js';
 import { createState, SAVE_VERSION } from '../core/state.js';
 import { createView } from '../core/view.js';
 import { createEvents } from '../core/events.js';
@@ -62,13 +62,7 @@ const saved = storage.load();
 const hasSave = saved?.v === SAVE_VERSION;
 
 const state = createState(saved);
-const scheduler = createScheduler(clock, restore(saved?.scheduler ?? [], clock.now()));
-
-// AI 호출 중에 끊긴 대화. 내 말은 되찾아뒀고 답장만 다시 잡아준다.
-state.interrupted().forEach((cid) => scheduler.add('reply', clock.now() + 2500, { cid }));
-
-// 자리를 비운 시간은 유휴가 아니다. 유휴 시계는 이 세션이 시작되는 지금부터 잰다.
-state.touch(clock.now());
+const scheduler = createScheduler(clock, saved?.scheduler ?? []);
 
 const view = createView({ state, content });
 const events = createEvents();
@@ -89,7 +83,32 @@ const actions = createActions({
 });
 
 events.on('message', (m) => console.log(m.me ? '나:' : `${m.cid}:`, m.text));
-setInterval(actions.tick, 1000);
+
+// 게임 안 시계는 바탕화면에 앉은 순간부터 흐른다. 랜딩과 부팅 화면에서는
+// 아무것도 만기되지 않는다. 시작 화면에 10분을 앉아 있다 들어가도 밀린
+// 답장이 한꺼번에 쏟아지지 않는 건 이 때문이다.
+//
+// 시작 신호는 셋이고 층이 다르다.
+//   autosave.start()  이름이 정해질 때   저장
+//   beginSession()    바탕화면 진입      게임 안 시계
+//   chatOpen()        메신저 로그인      공지·외부인
+let sessionBegun = false;
+
+function beginSession() {
+  if (sessionBegun) return;
+  sessionBegun = true;
+
+  // AI 호출 중에 끊긴 대화. 내 말은 되찾아뒀고 답장만 다시 걸어준다.
+  // 지난 예약으로 넣어두면 catchUp이 다른 만기 예약과 같은 규칙으로 당긴다.
+  // 여기서 직접 시각을 계산하면 CATCHUP.reply와 둘이 되어 한쪽만 고치게 된다.
+  state.interrupted().forEach((cid) => scheduler.add('reply', 0, { cid }));
+
+  // 자리를 비운 사이 만기된 예약을 지금부터 몇 초 뒤로 당긴다.
+  scheduler.catchUp();
+
+  // 자리를 비운 시간은 유휴가 아니다. 유휴 시계의 0점도 여기다.
+  state.touch(clock.now());
+}
 
 // 유휴 판정의 기준. core가 모르는 조작(문서 읽기, 창 옮기기, 탭 복귀)까지 친다.
 watchActivity(actions.markActive);
@@ -138,6 +157,15 @@ const watching = { current: null };
 function Game() {
   const [phase, setPhase] = useState(resumeName === null ? 'landing' : 'boot');
   const [name, setName] = useState(resumeName ?? saved?.player?.name ?? '');
+
+  // tick이 둘이면 말풍선이 두 번 도착한다. 정리를 붙여 이중 마운트에도
+  // 하나만 남게 한다. beginSession은 플래그가 있어 두 번 돌지 않는다.
+  useEffect(() => {
+    if (phase !== 'desk') return;
+    beginSession();
+    const timer = setInterval(actions.tick, 1000);
+    return () => clearInterval(timer);
+  }, [phase]);
 
   const enter = () => {
     state.setName(name);
