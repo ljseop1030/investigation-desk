@@ -230,6 +230,19 @@ test('답장이 도착한 시점에 1이 남아 있지 않다', async () => {
   assert.ok(mine.every((m) => m.read), '답장이 온 뒤에 1이 사라지는 화면은 없다');
 });
 
+test('읽음 예약은 대화당 하나만 잡힌다', async () => {
+  const { actions, scheduler, run } = setup();
+  actions.send('kang', 'A');
+  await run(10);
+  actions.send('kang', 'B');
+  await run(10);
+  actions.send('kang', 'C');
+
+  const reads = scheduler.pending().filter((e) => e.kind === 'read' && e.cid === 'kang');
+  assert.equal(reads.length, 1);
+  assert.equal(reads[0].at, 480000, '가장 이른 시각이 남는다');
+});
+
 test('제한열람은 신청 후 승인되면 열린다', async () => {
   const { actions, state, run } = setup();
   assert.equal(actions.requestRecord('1187-victim', '1187 기초자료 정리표 작성'), true);
