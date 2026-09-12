@@ -1,0 +1,20 @@
+# 액션 메이저 버전만 대신 본다. Node 20 폐기처럼 경고가 실패로 바뀌기 전에
+# PR로 먼저 온다. ci.yml이 pull_request에 걸려 있어 초록/빨강까지 붙어서 온다.
+#
+# npm은 켜지 않는다. 의존성이 적고 혼자 쓰는 판이라 PR만 늘어난다.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+
+    # checkout과 setup-node가 따로 오면 PR이 두 개다. 하나로 묶는다.
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+    commit-message:
+      prefix: ci
