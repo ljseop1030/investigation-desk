@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import * as content from './content-loader.js';
 import { createClock } from '../adapters/clock.js';
 import { createLocalStorage } from '../adapters/storage/local.js';
+import { createAi } from '../adapters/ai/index.js';
 import { createAutosave } from './save.js';
 import { watchActivity } from './activity.js';
 import { createScheduler } from '../core/scheduler.js';
@@ -77,8 +78,10 @@ const actions = createActions({
     story: createStoryRules(content.story, content.characters, { tempo: TEMPO }),
     notices: createNoticeRules(content.notices, content.characters, { tempo: TEMPO }),
   },
-  // P5까지는 fallback 대사로 돈다
-  ai: { reply: async () => { throw new Error('no ai yet'); } },
+  // /api/chat이 아직 없으면 fetch가 실패하고 core가 fallback 대사로 답한다.
+  // P4까지의 상태가 그대로 폴백이 되므로 이 배선은 화면을 바꾸지 않는다.
+  // bind가 필요하다. window.fetch를 떼어서 넘기면 Illegal invocation이 난다.
+  ai: createAi({ fetch: window.fetch.bind(window) }),
   chatApp: CHAT_APP,
 });
 
