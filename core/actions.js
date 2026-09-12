@@ -198,7 +198,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     try {
       out = await ai.reply(cid, log(cid));
     } catch {
-      const fb = c.private.fallback;
+      const fb = c.fallback;
       out = { messages: [fb[Math.floor(Math.random() * fb.length)]] };
     }
 
