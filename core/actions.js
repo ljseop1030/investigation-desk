@@ -38,7 +38,12 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     const queued = scheduler.pending().find((e) => e.kind === 'reply' && e.cid === cid);
     const { readAt, replyAt } = chat.schedule(c.style, now, queued?.at ?? null);
 
-    if (readAt !== null) scheduler.add('read', readAt, { cid });
+    // 읽음 예약은 대화당 하나. 이미 더 이른 게 잡혀 있으면 그걸 둔다.
+    // 답장이 뒤로 밀리지 않듯 읽음도 뒤로 밀지 않는다.
+    const queuedRead = scheduler.pending().find((e) => e.kind === 'read' && e.cid === cid);
+    if (queuedRead) scheduler.cancel((e) => e === queuedRead);
+    scheduler.add('read', Math.min(readAt, queuedRead?.at ?? Infinity), { cid });
+
     if (queued) scheduler.cancel((e) => e === queued);
     scheduler.add('reply', replyAt, { cid });
   }

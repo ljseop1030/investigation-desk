@@ -94,3 +94,17 @@ test('catchUp은 종류마다 다른 만큼 민다', () => {
   s.catchUp();
   assert.deepEqual(s.pending().map((e) => e.at), [1800, 4000, 4000]);
 });
+
+// read(800) < reply(2500)이라 순서가 지켜진다. 이 숫자를 만지는 사람이
+// 깨뜨리면 여기서 걸린다. schedule()이 read <= reply를 보장하므로
+// 답장만 만기되고 읽음은 미래인 조합은 애초에 생기지 않는다.
+test('복원해도 읽음이 답장보다 먼저 온다', () => {
+  const c = fakeClock(100000);
+  const s = createScheduler(c, [
+    { id: 'read:1', kind: 'read', at: 10, cid: 'kang' },
+    { id: 'reply:2', kind: 'reply', at: 20, cid: 'kang' },
+  ]);
+  s.catchUp();
+  const at = (k) => s.pending().find((e) => e.kind === k).at;
+  assert.ok(at('read') < at('reply'), '읽음이 답장보다 먼저');
+});
