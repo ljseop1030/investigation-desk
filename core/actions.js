@@ -38,7 +38,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     const queued = scheduler.pending().find((e) => e.kind === 'reply' && e.cid === cid);
     const { readAt, replyAt } = chat.schedule(c.style, now, queued?.at ?? null);
 
-    if (readAt !== null) scheduler.add('read', readAt, { cid });
+    scheduler.add('read', readAt, { cid });
     if (queued) scheduler.cancel((e) => e === queued);
     scheduler.add('reply', replyAt, { cid });
   }
