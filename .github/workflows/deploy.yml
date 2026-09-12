@@ -17,12 +17,12 @@ jobs:
       # submodules의 인증에도 이 token을 쓴다. 안 넘기면 기본 GITHUB_TOKEN으로
       # 가서 프라이빗 콘텐츠 저장소에서 막힌다. 부모도 같은 토큰으로 받으므로
       # 두 저장소 모두 Contents:read 가 필요하다.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
           token: ${{ secrets.CONTENT_PAT }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
