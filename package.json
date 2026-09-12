@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "wrangler pages dev dist --port 8788",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test \"**/*.test.js\"",
@@ -13,7 +14,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.1",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "wrangler": "^4.0.0"
   },
   "engines": {
     "node": ">=22"
