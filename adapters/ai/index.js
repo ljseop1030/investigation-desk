@@ -38,13 +38,23 @@ export function createAi({ fetch, endpoint = ENDPOINT } = {}) {
     // 다르다 — 그쪽은 침묵(ghost)이다. 서버가 죽었을 때 아무 말도 없는 것과
     // "지금 밖이라서요ㅠ"가 오는 것은 플레이어에게 전혀 다른 일이다.
     async reply(characterId, log) {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, history: toHistory(log) }),
-      });
-      if (!res.ok) throw new Error(`/api/chat ${res.status}`);
-      return normalize(await res.json());
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId, history: toHistory(log) }),
+        });
+        if (!res.ok) throw new Error(`/api/chat ${res.status}`);
+        return normalize(await res.json());
+      } catch (e) {
+        // 폴백 대사는 캐릭터가 할 법한 말로 쓰여 있다. 플레이어에게 안
+        // 들키는 게 맞지만, 그래서 개발자도 못 알아본다. 유현욱의
+        // "제 소관 업무가 아닙니다."는 폴백이면서 동시에 페르소나가
+        // 시킨 말이라, 모델이 페르소나를 지켰는지 판단할 수가 없다.
+        // 화면은 그대로 두고 콘솔에만 남긴다.
+        console.warn(`[ai] ${characterId} 폴백 — ${e.message}`);
+        throw e;
+      }
     },
   };
 }

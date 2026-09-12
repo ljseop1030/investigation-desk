@@ -13,7 +13,7 @@
 // 것이지 서버의 것이 아니다.
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-3.7-flash';
 
 // 말이 안 되는 응답에 대한 상한이다. 캐릭터별 정확한 개수는 core가
 // style.bubbles로 자른다. 그 숫자가 사는 곳이 거기라서 여기로 가져오지 않는다.
@@ -155,24 +155,38 @@ export async function onRequestPost({ request, env }) {
         },
       }),
     });
-  } catch {
+  } catch (e) {
+    console.error('[chat] 모델에 닿지 못함', e?.message);
     return json({ error: 'upstream unreachable' }, 502);
   }
 
-  if (!res.ok) return json({ error: 'upstream', status: res.status }, 502);
+  // 왜 막혔는지는 구글이 본문에 적어 보낸다. 모델 id가 틀렸는지, 스키마를
+  // 거부당했는지, 키가 문제인지가 여기서만 갈린다. 응답으로 흘리지 않고
+  // 로그로만 남긴다 — 클라이언트는 fallback으로 도는 것만 알면 된다.
+  if (!res.ok) {
+    console.error('[chat] 모델 거부', res.status, model, (await res.text()).slice(0, 600));
+    return json({ error: 'upstream', status: res.status }, 502);
+  }
 
-  let text;
+  let data;
   try {
-    const data = await res.json();
-    text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    data = await res.json();
   } catch {
+    console.error('[chat] 응답이 JSON이 아님');
     return json({ error: 'upstream shape' }, 502);
   }
-  if (typeof text !== 'string') return json({ error: 'upstream shape' }, 502);
+
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof text !== 'string') {
+    // 안전필터에 걸리거나 토큰이 모자라면 parts 없이 finishReason만 온다
+    console.error('[chat] 본문 없음', JSON.stringify(data).slice(0, 600));
+    return json({ error: 'upstream shape' }, 502);
+  }
 
   try {
     return json(validate(JSON.parse(text)));
   } catch {
+    console.error('[chat] 모델이 JSON이 아닌 것을 뱉음', text.slice(0, 600));
     return json({ error: 'model json' }, 502);
   }
 }
