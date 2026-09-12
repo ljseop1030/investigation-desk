@@ -204,6 +204,32 @@ test('답장 대기 중 또 보내도 답장이 밀리지 않는다', async () =
   assert.equal(after, first, 'burst는 모아서 한 번에 답한다');
 });
 
+// 답장이 안 밀리는 것과 '1'이 안 사라지는 것은 다른 얘기다.
+// 단위 테스트는 schedule()의 반환값만 보느라 이걸 오래 놓치고 있었다.
+test('답장을 기다리는 중에 또 보내도 읽음은 온다', async () => {
+  const { actions, state, run } = setup();
+  actions.send('kang', 'A');
+  await run(60);
+  actions.send('kang', 'B');
+
+  await run(430);   // t=490. 읽음(480초)은 지났고 답장(660초)은 아직
+  const mine = state.progress().chats.kang.filter((m) => m.me);
+  assert.equal(mine.length, 2);
+  assert.ok(mine.every((m) => m.read), '답장 전에 둘 다 읽음');
+});
+
+test('답장이 도착한 시점에 1이 남아 있지 않다', async () => {
+  const { actions, state, seen, run } = setup();
+  actions.send('kang', 'A');
+  await run(600);   // 읽음은 지났고 답장은 아직. 여기서 보내면 읽음이 답장 뒤로 굴러간다
+  actions.send('kang', 'B');
+
+  await run(65);    // t=665. 답장 도착
+  assert.ok(replies(seen).length > 0, '답장은 왔다');
+  const mine = state.progress().chats.kang.filter((m) => m.me);
+  assert.ok(mine.every((m) => m.read), '답장이 온 뒤에 1이 사라지는 화면은 없다');
+});
+
 test('제한열람은 신청 후 승인되면 열린다', async () => {
   const { actions, state, run } = setup();
   assert.equal(actions.requestRecord('1187-victim', '1187 기초자료 정리표 작성'), true);

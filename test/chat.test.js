@@ -40,7 +40,6 @@ test('burst 아니면 두 번째 답장이 첫 답장 뒤에 붙는다', () => {
   const c = createChatRules({ random: fixed(0) });
   const a = c.schedule(kim, 0);
   const b = c.schedule(kim, 5000, a.replyAt);
-  assert.equal(b.readAt, null);
   assert.equal(b.replyAt, a.replyAt + 20000);
   assert.ok(b.replyAt > a.replyAt);
 });
@@ -49,6 +48,28 @@ test('burst면 잡혀 있던 시각에 모아서 답한다', () => {
   const c = createChatRules({ random: fixed(0) });
   const a = c.schedule(kang, 0);
   const b = c.schedule(kang, 5000, a.replyAt);
-  assert.equal(b.readAt, null);
   assert.equal(b.replyAt, a.replyAt);   // 밀리지 않는다
+});
+
+// 답장이 안 밀린다고 '1'까지 멈춰 있으면 상대가 내 말을 못 본 것처럼 보인다.
+test('답장이 잡혀 있어도 읽음은 새로 잡힌다', () => {
+  const c = createChatRules({ random: fixed(0) });
+
+  const a = c.schedule(kim, 0);
+  const b = c.schedule(kim, 5000, a.replyAt);
+  assert.ok(b.readAt > 5000, '보낸 시각보다 뒤');
+  assert.ok(b.readAt <= b.replyAt, '답장보다 앞');
+
+  const x = c.schedule(kang, 0);
+  const y = c.schedule(kang, 5000, x.replyAt);
+  assert.ok(y.readAt > 5000);
+  assert.ok(y.readAt <= y.replyAt);
+});
+
+// 강윤하는 읽기까지 8~20분이다. 답장이 코앞이면 읽음이 답장 뒤로 간다.
+test('읽음이 답장보다 늦으면 답장 시각으로 당긴다', () => {
+  const c = createChatRules({ random: fixed(0) });
+  const b = c.schedule(kang, 0, 1000);
+  assert.equal(b.replyAt, 1000);
+  assert.equal(b.readAt, 1000);
 });
