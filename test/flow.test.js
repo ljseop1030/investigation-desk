@@ -18,28 +18,28 @@ const CONTENT = {
     {
       id: 'kang', name: '강윤하',
       style: { read: [480, 1200], reply: [120, 300], burst: true, burstWait: 180, bubbles: [2, 4], tailGap: 0 },
-      private: { fallback: ['아이고 이제 봤네요 ^^'] },
+      fallback: ['아이고 이제 봤네요 ^^'],
     },
     {
       id: 'won', name: '원 화',
       style: { read: [180, 600], reply: [10, 30], burst: false, burstWait: 0, bubbles: [1, 1], tailGap: 0 },
       script: ['당신 업무는 제 관리관할이 아닙니다.', null],
-      private: { fallback: ['.'] },
+      fallback: ['.'],
     },
     {
       id: 'baek', name: '백유림',
       style: { read: [4, 15], reply: [15, 45], burst: false, burstWait: 0, bubbles: [1, 3], tailGap: 0 },
-      private: { fallback: ['아 넵! 확인해볼게요'] },
+      fallback: ['아 넵! 확인해볼게요'],
     },
     {
       id: 'bot', name: '경무기획계', traits: [TRAIT.BROADCAST],
       style: { read: [0, 0], reply: [0, 0], burst: false, burstWait: 0, bubbles: [1, 1], tailGap: 0 },
-      private: { fallback: ['본 계정은 발신 전용입니다.'] },
+      fallback: ['본 계정은 발신 전용입니다.'],
     },
     {
       id: 'kim', name: '김주원',
       style: { read: [20, 20], reply: [20, 20], burst: false, burstWait: 0, bubbles: [2, 3], tailGap: 150 },
-      private: { fallback: ['이런 것까지 나한테 물어봐요?'] },
+      fallback: ['이런 것까지 나한테 물어봐요?'],
     },
   ],
   records: [
