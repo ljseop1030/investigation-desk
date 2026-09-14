@@ -57,6 +57,10 @@ export function createState(saved) {
     // 끊긴 대화. 부르는 쪽이 답장을 다시 잡아준다.
     interrupted: () => [...interrupted],
 
+    // 프롬프트에 실려 나가는 유일한 player 필드다. get()으로 통째로 꺼내면
+    // 부르는 쪽이 s를 직접 밀 수 있게 되므로 좁은 창구를 낸다.
+    playerName: () => s.player.name,
+
     setName(name) {
       s.player.name = name;
     },

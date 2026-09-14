@@ -18,28 +18,28 @@ const CONTENT = {
     {
       id: 'kang', name: '강윤하',
       style: { read: [480, 1200], reply: [120, 300], burst: true, burstWait: 180, bubbles: [2, 4], tailGap: 0 },
-      private: { fallback: ['아이고 이제 봤네요 ^^'] },
+      fallback: ['아이고 이제 봤네요 ^^'],
     },
     {
       id: 'won', name: '원 화',
       style: { read: [180, 600], reply: [10, 30], burst: false, burstWait: 0, bubbles: [1, 1], tailGap: 0 },
       script: ['당신 업무는 제 관리관할이 아닙니다.', null],
-      private: { fallback: ['.'] },
+      fallback: ['.'],
     },
     {
       id: 'baek', name: '백유림',
       style: { read: [4, 15], reply: [15, 45], burst: false, burstWait: 0, bubbles: [1, 3], tailGap: 0 },
-      private: { fallback: ['아 넵! 확인해볼게요'] },
+      fallback: ['아 넵! 확인해볼게요'],
     },
     {
       id: 'bot', name: '경무기획계', traits: [TRAIT.BROADCAST],
       style: { read: [0, 0], reply: [0, 0], burst: false, burstWait: 0, bubbles: [1, 1], tailGap: 0 },
-      private: { fallback: ['본 계정은 발신 전용입니다.'] },
+      fallback: ['본 계정은 발신 전용입니다.'],
     },
     {
       id: 'kim', name: '김주원',
       style: { read: [20, 20], reply: [20, 20], burst: false, burstWait: 0, bubbles: [2, 3], tailGap: 150 },
-      private: { fallback: ['이런 것까지 나한테 물어봐요?'] },
+      fallback: ['이런 것까지 나한테 물어봐요?'],
     },
   ],
   records: [
@@ -174,6 +174,20 @@ test('AI가 실패하면 fallback으로 답한다', async () => {
   actions.send('kang', '자료 주세요');
   await run(700);
   assert.equal(replies(seen)[0].text, '아이고 이제 봤네요 ^^');
+});
+
+test('플레이어 이름이 어댑터까지 간다', async () => {
+  // 어댑터는 받은 것을 실어 보내기만 한다. 애초에 아무도 안 넘겨주면
+  // 어댑터 테스트가 전부 통과하면서 프롬프트의 이름 블록만 죽는다.
+  // 그 배선이 P5a 내내 빠져 있었다.
+  let got;
+  const { actions, state, run } = setup({
+    reply: async (cid, log, playerName) => { got = playerName; return { messages: ['네.'] }; },
+  });
+  state.setName('김민수');
+  actions.send('kang', '자료 주세요');
+  await run(700);
+  assert.equal(got, '김민수');
 });
 
 test('대본 캐릭터는 AI를 부르지 않는다', async () => {
