@@ -13,7 +13,7 @@
 // 것이지 서버의 것이 아니다.
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-3.7-flash';
+const DEFAULT_MODEL = 'gemini-3.6-flash';
 
 // 말이 안 되는 응답에 대한 상한이다. 캐릭터별 정확한 개수는 core가
 // style.bubbles로 자른다. 그 숫자가 사는 곳이 거기라서 여기로 가져오지 않는다.
