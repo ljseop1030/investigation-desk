@@ -196,8 +196,8 @@ export function createActions({ content, state, scheduler, events, rules, clock,
 
     let out;
     try {
-      out = await ai.reply(cid, log(cid));
-    } catch {
+      out = await ai.reply(cid, log(cid), state.playerName());   // ← 3번째 인자 추가
+    } catch { 
       const fb = c.fallback;
       out = { messages: [fb[Math.floor(Math.random() * fb.length)]] };
     }

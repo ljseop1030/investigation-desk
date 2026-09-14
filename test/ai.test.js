@@ -33,19 +33,42 @@ test('빈 말은 버린다', () => {
   assert.equal(toHistory([{ me: true, text: '' }, { me: true, text: 'x' }]).length, 1);
 });
 
-test('전선에 나가는 것은 characterId와 history 둘뿐', async () => {
-  let sent;
-  const ai = createAi({
-    fetch: async (url, opts) => {
-      sent = { url, body: JSON.parse(opts.body) };
-      return { ok: true, status: 200, json: async () => ({ messages: ['네.'] }) };
-    },
-  });
-  await ai.reply('yoo', [{ me: true, text: '감식 자료 주세요' }]);
+const capture = (body = { messages: ['네.'] }) => {
+  const box = {};
+  box.fetch = async (url, opts) => {
+    box.url = url;
+    box.body = JSON.parse(opts.body);
+    return { ok: true, status: 200, json: async () => body };
+  };
+  return box;
+};
 
-  assert.equal(sent.url, '/api/chat');
-  assert.deepEqual(Object.keys(sent.body), ['characterId', 'history']);
-  assert.equal(sent.body.characterId, 'yoo');
+test('전선에 나가는 것은 characterId·history·playerName 셋뿐', async () => {
+  // style도 bubbles도 보내지 않는다. 서버가 characterId로 자기 콘텐츠에서
+  // 꺼낸다. 클라이언트가 말해주는 것은 무엇도 신뢰하지 않는다.
+  const box = capture();
+  const ai = createAi({ fetch: box.fetch });
+  await ai.reply('yoo', [{ me: true, text: '감식 자료 주세요' }], '김민수');
+
+  assert.equal(box.url, '/api/chat');
+  assert.deepEqual(Object.keys(box.body), ['characterId', 'history', 'playerName']);
+  assert.equal(box.body.characterId, 'yoo');
+});
+
+test('플레이어 이름이 실린다', async () => {
+  // 게임 상태가 아니라 플레이어가 시작 화면에서 방금 입력한 자기 데이터다.
+  // P10 전까지 서버가 알 방법이 없어서 이것만 클라이언트가 말해준다.
+  const box = capture();
+  await createAi({ fetch: box.fetch }).reply('kang', [{ me: true, text: '안녕하세요' }], '김민수');
+  assert.equal(box.body.playerName, '김민수');
+});
+
+test('이름을 안 받으면 빈 문자열로 보낸다', async () => {
+  // 시작 화면에서 이름을 비워둘 수 있다. undefined가 나가면 JSON에서
+  // 키째 사라지고, 서버의 typeof 검사가 다른 가지를 탄다.
+  const box = capture();
+  await createAi({ fetch: box.fetch }).reply('kang', []);
+  assert.equal(box.body.playerName, '');
 });
 
 test('모자란 필드를 채워서 돌려준다', async () => {
