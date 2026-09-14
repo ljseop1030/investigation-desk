@@ -101,6 +101,40 @@ export function validate(raw) {
   };
 }
 
+// 콘텐츠를 못 읽는 것과 모르는 캐릭터는 원인도, 고치는 사람도 다르다.
+// 502는 서브모듈·배포 문제이고 400은 클라이언트가 부르지 말았어야 할 것을
+// 부른 것이다. 하나로 뭉치면 5c에서 둘 다 의심하며 시간을 쓴다.
+//
+// 로더를 인자로 받는 것은 테스트 때문이다. 여기서 직접 import 하면 콘텐츠가
+// 있는 자리(로컬)와 없는 자리(CI)에서 결과가 갈려 테스트를 쓸 수가 없다.
+export async function resolveSystem(load, { characterId, playerName, opening }) {
+  let buildSystem;
+  try {
+    ({ buildSystem } = await load());
+  } catch (e) {
+    console.error('[chat] 콘텐츠를 읽지 못함', e?.message);
+    return { status: 502, error: 'content missing' };
+  }
+
+  let system;
+  try {
+    system = buildSystem({ characterId, playerName, opening });
+  } catch (e) {
+    console.error('[chat] 프롬프트 조립 실패', characterId, e?.message);
+    return { status: 400, error: 'unknown character' };
+  }
+
+  // persona가 빠진 캐릭터는 던지지 않고 빈 것을 돌려줄 수도 있다.
+  // 그대로 보내면 모델이 아무 성격 없이 답하고, 화면에서는 페르소나가
+  // 무너진 것처럼 보인다. personas/index.js가 손목록이라 실제로 생길 수 있다.
+  if (typeof system !== 'string' || !system.trim()) {
+    console.error('[chat] 시스템 프롬프트가 비었다', characterId);
+    return { status: 400, error: 'unknown character' };
+  }
+
+  return { system };
+}
+
 export async function onRequestPost({ request, env }) {
   if (!env.GEMINI_API_KEY) return json({ error: 'no key' }, 500);
 
@@ -120,18 +154,13 @@ export async function onRequestPost({ request, env }) {
   // 콘텐츠를 핸들러 안에서 부른다. 최상단에 두면 이 파일을 import 하는
   // 것만으로 content/가 필요해지고, CI는 콘텐츠 없이 도는 게 정상이다.
   // 정적 specifier라 번들에는 그대로 딸려 들어간다.
-  let system;
-  try {
-    const { buildSystem } = await import('../../content/prompt.js');
-    system = buildSystem({
-      characterId,
-      playerName: typeof playerName === 'string' ? playerName : '',
-      opening,
-    });
-  } catch {
-    // persona가 없는 캐릭터다. core가 갈라내야 하는데 여기까지 왔다.
-    return json({ error: 'unknown character' }, 400);
-  }
+  const built = await resolveSystem(() => import('../../content/prompt.js'), {
+    characterId,
+    playerName: typeof playerName === 'string' ? playerName : '',
+    opening,
+  });
+  if (built.error) return json({ error: built.error }, built.status);
+  const system = built.system;
 
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;
 

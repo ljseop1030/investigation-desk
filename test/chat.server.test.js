@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { shape, strip, validate } from '../functions/api/chat.js';
+import { shape, strip, validate, resolveSystem } from '../functions/api/chat.js';
 
 // 이 파일이 핸들러를 그냥 import 할 수 있는 것은 콘텐츠를 핸들러 안에서
 // await import 하기 때문이다. 최상단에 뒀으면 이 파일을 여는 것만으로
@@ -163,4 +163,56 @@ test('ghost와 leak은 true일 때만 true', () => {
   const out = validate({ messages: ['네.'], ghost: 'yes', leak: 1 });
   assert.equal(out.ghost, false);
   assert.equal(out.leak, false);
+});
+
+
+/* ========================== resolveSystem ========================== */
+
+const args = { characterId: 'yoo', playerName: '김민수', opening: '' };
+
+test('콘텐츠를 못 읽으면 502', async () => {
+  // 서브모듈이 빠졌거나 prompt.js가 터진 것이다. 캐릭터와 무관한 서버
+  // 문제라, 400으로 뭉뚱그리면 5c에서 클라이언트를 의심하며 시간을 쓴다.
+  const out = await resolveSystem(async () => { throw new Error('ENOENT'); }, args);
+  assert.equal(out.status, 502);
+  assert.equal(out.error, 'content missing');
+});
+
+test('buildSystem이 던지면 400', async () => {
+  const load = async () => ({ buildSystem: () => { throw new Error('no persona'); } });
+  const out = await resolveSystem(load, args);
+  assert.equal(out.status, 400);
+  assert.equal(out.error, 'unknown character');
+});
+
+test('프롬프트가 비면 400', async () => {
+  // personas/index.js가 손목록이라 persona 하나가 조용히 빠질 수 있다.
+  // 빈 채로 보내면 모델이 성격 없이 답하고, 화면에서는 페르소나가
+  // 무너진 것처럼 보인다.
+  for (const empty of ['', '   ', undefined, null, 42]) {
+    const out = await resolveSystem(async () => ({ buildSystem: () => empty }), args);
+    assert.equal(out.status, 400, String(empty));
+  }
+});
+
+test('콘텐츠 실패와 캐릭터 실패는 상태 코드가 다르다', async () => {
+  // 이 커밋 전에는 둘 다 400이었다. 5c에서 원인 후보를 가르는 값이다.
+  const missing = await resolveSystem(async () => { throw new Error('x'); }, args);
+  const unknown = await resolveSystem(
+    async () => ({ buildSystem: () => { throw new Error('x'); } }), args
+  );
+  assert.notEqual(missing.status, unknown.status);
+});
+
+test('조립에 성공하면 system만 돌려준다', async () => {
+  const load = async () => ({ buildSystem: () => '당신은 유현욱 경위다.' });
+  const out = await resolveSystem(load, args);
+  assert.deepEqual(out, { system: '당신은 유현욱 경위다.' });
+});
+
+test('buildSystem에 셋을 그대로 넘긴다', async () => {
+  let got;
+  const load = async () => ({ buildSystem: (a) => { got = a; return '프롬프트'; } });
+  await resolveSystem(load, { characterId: 'kang', playerName: '김민수', opening: '안녕하세요!' });
+  assert.deepEqual(got, { characterId: 'kang', playerName: '김민수', opening: '안녕하세요!' });
 });
