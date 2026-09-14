@@ -176,6 +176,20 @@ test('AI가 실패하면 fallback으로 답한다', async () => {
   assert.equal(replies(seen)[0].text, '아이고 이제 봤네요 ^^');
 });
 
+test('플레이어 이름이 어댑터까지 간다', async () => {
+  // 어댑터는 받은 것을 실어 보내기만 한다. 애초에 아무도 안 넘겨주면
+  // 어댑터 테스트가 전부 통과하면서 프롬프트의 이름 블록만 죽는다.
+  // 그 배선이 P5a 내내 빠져 있었다.
+  let got;
+  const { actions, state, run } = setup({
+    reply: async (cid, log, playerName) => { got = playerName; return { messages: ['네.'] }; },
+  });
+  state.setName('김민수');
+  actions.send('kang', '자료 주세요');
+  await run(700);
+  assert.equal(got, '김민수');
+});
+
 test('대본 캐릭터는 AI를 부르지 않는다', async () => {
   let called = 0;
   const { actions, seen, run } = setup({ reply: async () => { called++; return { messages: ['x'] }; } });
