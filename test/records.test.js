@@ -11,6 +11,7 @@ const RECORDS = [
   { id: '1187-forensic', access: ACCESS.UNREGISTERED, provider: 'yoo' },
   { id: '1187-photos',   access: ACCESS.UNREGISTERED, provider: 'yoo' },
   { id: '1187-vehicle',  access: ACCESS.UNREGISTERED, provider: 'kim' },
+  { id: '1187-report-log', access: ACCESS.NONE, provider: 'kang' },
 ];
 
 const rules = (opts) => createRecordRules(RECORDS, opts);
@@ -21,6 +22,7 @@ test('제한열람만 신청 대상', () => {
   assert.equal(r.canRequest('1187-victim', '1187 기초자료 정리표 작성'), true);
   assert.equal(r.canRequest('1187-cctv', '1187 기초자료 정리표 작성'), false);
   assert.equal(r.canRequest('1187-forensic', '1187 기초자료 정리표 작성'), false);
+  assert.equal(r.canRequest('1187-report-log', '1187 기초자료 정리표 작성'), false);
   assert.equal(r.canRequest('없는키', '1187 기초자료 정리표 작성'), false);
 });
 
