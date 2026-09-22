@@ -169,6 +169,7 @@ export async function onRequestPost({ request, env }) {
   const system = built.system;
 
   const model = env.GEMINI_MODEL || DEFAULT_MODEL;
+  const t0 = Date.now();
 
   let res;
   try {
@@ -194,6 +195,11 @@ export async function onRequestPost({ request, env }) {
     console.error('[chat] 모델에 닿지 못함', e?.message);
     return json({ error: 'upstream unreachable' }, 502);
   }
+
+  // 어느 모델이 답했는지는 성공했을 때도 남겨야 한다. secret은 마스킹돼
+  // 되읽히지 않고, 아래 '모델 거부'는 실패했을 때만 찍힌다. 그래서 배포본이
+  // 무엇으로 도는지 확인할 길이 없었다. 200·429·503이 전부 이 한 줄을 지난다.
+  console.log('[chat]', characterId, model, res.status, Date.now() - t0);
 
   // 왜 막혔는지는 구글이 본문에 적어 보낸다. 모델 id가 틀렸는지, 스키마를
   // 거부당했는지, 키가 문제인지가 여기서만 갈린다. 응답으로 흘리지 않고
