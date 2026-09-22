@@ -1,0 +1,19 @@
+# 이 파일이 들어온 순간부터 Pages 프로젝트 설정의 source of truth는 여기다.
+# 대시보드에서 같은 필드는 보이지만 고칠 수 없다. 설정을 못 고쳐서 헤매게
+# 되면 이 줄을 먼저 볼 것.
+#
+# pages_build_output_dir이 없으면 wrangler가 파일 전체를 무시한다
+# (`Ignoring configuration file for now`). compatibility_date도 안 먹는다.
+# 값을 적어놓고 안 먹는 쪽이 파일이 없는 것보다 나쁘다.
+#
+# compatibility_date는 손으로 오늘 날짜를 적은 값이 아니라
+# `npx wrangler pages download config investigation-desk`가 대시보드에서
+# 받아온 값이다. 런타임 버전을 지금 자리에 고정하는 것이 목적이지
+# 최신으로 올리는 것이 목적이 아니다.
+#
+# 키는 여기 없다. secret이라 설정 파일 관할이 아니고, 그래서 이 파일이
+# 들어와도 GEMINI_API_KEY를 덮지 않는다.
+
+name = "investigation-desk"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-11"

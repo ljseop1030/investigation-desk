@@ -40,6 +40,15 @@ jobs:
         env:
           VITE_TEMPO: ${{ vars.VITE_TEMPO }}
 
+      # VITE_ 접두사가 안 붙었으면 구조상 번들에 안 들어간다. 다만 붙는
+      # 실수가 조용하고, 한 번 보고 지우는 확인 항목은 다음 배포를 못 지킨다.
+      - name: 키가 dist에 섞였는지
+        run: |
+          if grep -rEq "AIza[0-9A-Za-z_-]{10,}|gsk_[0-9A-Za-z]{10,}" dist; then
+            echo "::error::API 키로 보이는 문자열이 dist에 있다"
+            exit 1
+          fi
+
       # 빌드 산출물을 artifact로 올리지 않는다. 퍼블릭 저장소의 artifact는
       # 누구나 받을 수 있다. 같은 job 안에서 배포하고 끝낸다.
       - uses: cloudflare/wrangler-action@v4
