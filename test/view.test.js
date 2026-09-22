@@ -55,6 +55,29 @@ test('구두로 받아도 DB에는 나타나지 않는다', () => {
   assert.equal(view.recordBody('held-one'), null);
 });
 
+test('목록에는 숨은 자료가 빠진다', () => {
+  const { view, p } = setup();
+  assert.deepEqual(view.visibleRecordIds(), ['open-one', 'locked-one', 'missing-one'], '콘텐츠 순서 그대로');
+
+  p.delivered.push('held-one');
+  assert.deepEqual(
+    view.visibleRecordIds(),
+    ['open-one', 'locked-one', 'missing-one'],
+    '구두로 받아도 목록에 생기지 않는다'
+  );
+});
+
+test('목록은 진행에 따라 늘거나 줄지 않는다', () => {
+  const { view, p } = setup();
+  const before = view.visibleRecordIds();
+
+  p.requested.push('locked-one');
+  p.unlocked.push('locked-one');
+  p.delivered.push('missing-one');
+
+  assert.deepEqual(view.visibleRecordIds(), before, '상태만 바뀌고 목록은 그대로다');
+});
+
 test('열리기 전에는 본문을 주지 않는다', () => {
   const { view, p } = setup();
   assert.equal(view.recordBody('locked-one'), null);

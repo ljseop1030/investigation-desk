@@ -56,6 +56,12 @@ export function createView({ state, content }) {
 
     recordState: stateOf,
 
+    // 목록에 무엇이 뜨는가도 access와 진행 상태의 합성이다. UI가 각자 거르기
+    // 시작하면 RECORD를 여기 둔 이유가 없어진다. id만 내준다 — 본문은 UI가
+    // content에서 직접 읽는다는 경계는 그대로다. 순서는 콘텐츠 순서.
+    visibleRecordIds: () =>
+      content.records.filter((r) => stateOf(r.id) !== RECORD.HIDDEN).map((r) => r.id),
+
     // 열려 있을 때만 준다. UI가 private을 직접 들여다보지 않게.
     recordBody(recordId) {
       if (stateOf(recordId) !== RECORD.OPEN) return null;
