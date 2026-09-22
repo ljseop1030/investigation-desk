@@ -1,4 +1,4 @@
-import { TRAIT } from '../shared/enums.js';
+import { DELIVERY, TRAIT } from '../shared/enums.js';
 
 export function createActions({ content, state, scheduler, events, rules, clock, ai, chatApp }) {
   const { chat, records, forms, story, notices } = rules;
@@ -196,7 +196,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
 
     let out;
     try {
-      out = await ai.reply(cid, log(cid), state.playerName());   // ← 3번째 인자 추가
+      out = await ai.reply(cid, log(cid), state.playerName());
     } catch { 
       const fb = c.fallback;
       out = { messages: [fb[Math.floor(Math.random() * fb.length)]] };
@@ -208,6 +208,8 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     if (out.ghost || !out.messages?.length) return;
 
     const texts = out.messages.slice(0, c.style.bubbles[1]);
+
+    // [{ id, kind }]. 등록인지 구두인지는 규칙이 정해서 붙여 보낸다.
     const ok = records.validDeliveries(out.delivers, cid, p().delivered);
 
     chat.bubbleTimes(c.style, texts, clock.now()).forEach((b, i) =>
@@ -254,9 +256,16 @@ export function createActions({ content, state, scheduler, events, rules, clock,
 
   function tick() {
     for (const e of scheduler.tick()) {
+      // 수령 기록은 둘 다 남긴다. 발설 판정이 "이 자료를 정식 경로로
+      // 받았는가"를 여기서 읽는다. 다만 DB에 뜨는 것은 등록분뿐이라
+      // 화면에 알릴 일도 그쪽뿐이다.
       if (e.delivers?.length) {
-        p().delivered.push(...e.delivers);
-        e.delivers.forEach((id) => events.emit('record:registered', { recordId: id }));
+        for (const d of e.delivers) {
+          p().delivered.push(d.id);
+          if (d.kind === DELIVERY.REGISTER) {
+            events.emit('record:registered', { recordId: d.id });
+          }
+        }
       }
       handlers[e.kind]?.(e);
     }

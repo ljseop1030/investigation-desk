@@ -8,6 +8,13 @@ export const ACCESS = {
   NONE: 'none',                   // DB에 올라올 일이 없음. 담당자가 말로만 준다
 };
 
+// 자료를 건네는 방식. access에서 파생된다 — 필드가 아니라 계산값이다.
+// UNREGISTERED는 DB에 올라가고, NONE은 말로만 간다. 둘 다 수령 기록은 남는다.
+export const DELIVERY = {
+  REGISTER: 'register',
+  TELL: 'tell',
+};
+
 // 양식 제출 상태
 export const STATUS = {
   DRAFT: 'draft', // 아직 작성 중

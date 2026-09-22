@@ -45,6 +45,8 @@ const CONTENT = {
   records: [
     { id: '1187-victim', access: ACCESS.RESTRICTED },
     { id: '1187-forensic', access: ACCESS.UNREGISTERED, provider: 'yoo' },
+    { id: '1204-print', access: ACCESS.UNREGISTERED, provider: 'kim' },
+    { id: '1187-report-log', access: ACCESS.NONE, provider: 'kang' },
   ],
   forms: [{ id: '1187-basic', fields: [{ id: 'location', private: { keys: ['강변로3길', '27'] } }] }],
   story: {
@@ -280,6 +282,36 @@ test('provider가 아니면 자료를 등록할 수 없다', async () => {
   await run(700);
   // 1187-forensic은 yoo 소관이다. 강윤하가 준다고 해도 등록되지 않는다.
   assert.deepEqual(state.progress().delivered, []);
+});
+
+test('소관 자료를 등록하면 DB에 뜬다', async () => {
+  const { actions, state, view, events, run } = setup({
+    reply: async () => ({ messages: ['조회는 해뒀어요.'], delivers: ['1204-print'] }),
+  });
+  const registered = [];
+  events.on('record:registered', (e) => registered.push(e.recordId));
+
+  actions.send('kim', '1204 지문 대조 결과 주세요');
+  await run(700);
+
+  assert.deepEqual(state.progress().delivered, ['1204-print']);
+  assert.equal(view.recordState('1204-print'), 'open');
+  assert.deepEqual(registered, ['1204-print']);
+});
+
+test('말로만 주는 자료는 수령 기록만 남는다', async () => {
+  const { actions, state, view, events, run } = setup({
+    reply: async () => ({ messages: ['접수시각 02:47이에요~'], delivers: ['1187-report-log'] }),
+  });
+  const registered = [];
+  events.on('record:registered', (e) => registered.push(e.recordId));
+
+  actions.send('kang', '신고접수 원부 주세요');
+  await run(700);
+
+  assert.deepEqual(state.progress().delivered, ['1187-report-log'], '받은 것은 기록된다');
+  assert.equal(view.recordState('1187-report-log'), 'hidden', 'DB에는 나타나지 않는다');
+  assert.deepEqual(registered, [], '등록 알림도 뜨지 않는다');
 });
 
 test('양식은 제출 후 검토를 거쳐 채점된다', async () => {
