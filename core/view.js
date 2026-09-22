@@ -6,6 +6,7 @@ export const RECORD = {
   LOCKED: 'locked',     // 조회 사유 신청 필요
   PENDING: 'pending',   // 승인 대기
   MISSING: 'missing',   // 담당자가 등록해야 보인다
+  HIDDEN: 'hidden',     // DB에 올라올 일이 없다. 목록에도 없다
 };
 
 // 진행 상태만 투영한다. 문서 본문은 UI가 content-loader에서 직접 읽는다.
@@ -14,9 +15,18 @@ export function createView({ state, content }) {
   const recordById = new Map(content.records.map((r) => [r.id, r]));
   const clone = (v) => structuredClone(v);
 
+  // 마지막 줄이 기본값이다. access를 하나 늘려놓고 여기에 분기를 안 달면
+  // 그 자료는 조용히 RESTRICTED로 읽혀 LOCKED가 되고, 화면에 조회 사유
+  // 입력 박스가 뜬다. canRequest는 access로 막으니 버튼만 죽어 있다.
+  // NONE을 맨 앞에 두는 것은 값 때문이 아니라(끝에 둬도 결과는 같다)
+  // "이건 목록에 없다"가 먼저 읽혀야 해서다.
+  //
+  // 구두로 받은 자료(delivered)도 계속 HIDDEN이다. 수령 기록은 남지만
+  // DB에 등록된 것이 아니다. 둘을 같은 배열에 쌓기 때문에 여기서 갈라야 한다.
   const stateOf = (recordId) => {
     const r = recordById.get(recordId);
     if (!r) return null;
+    if (r.access === ACCESS.NONE) return RECORD.HIDDEN;
     if (r.access === ACCESS.OPEN) return RECORD.OPEN;
     if (r.access === ACCESS.UNREGISTERED) {
       return p().delivered.includes(recordId) ? RECORD.OPEN : RECORD.MISSING;
@@ -45,6 +55,12 @@ export function createView({ state, content }) {
     isAuthed: (appId) => !!p().authed[appId],
 
     recordState: stateOf,
+
+    // 목록에 무엇이 뜨는가도 access와 진행 상태의 합성이다. UI가 각자 거르기
+    // 시작하면 RECORD를 여기 둔 이유가 없어진다. id만 내준다 — 본문은 UI가
+    // content에서 직접 읽는다는 경계는 그대로다. 순서는 콘텐츠 순서.
+    visibleRecordIds: () =>
+      content.records.filter((r) => stateOf(r.id) !== RECORD.HIDDEN).map((r) => r.id),
 
     // 열려 있을 때만 준다. UI가 private을 직접 들여다보지 않게.
     recordBody(recordId) {

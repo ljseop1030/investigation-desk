@@ -9,6 +9,7 @@ const CONTENT = {
     { id: 'open-one', access: ACCESS.OPEN, body: '공개본' },
     { id: 'locked-one', access: ACCESS.RESTRICTED, private: { body: '비밀' } },
     { id: 'missing-one', access: ACCESS.UNREGISTERED, provider: 'yoo', private: { body: '감식결과' } },
+    { id: 'held-one', access: ACCESS.NONE, provider: 'kang', private: { body: '접수시각 02:47' } },
   ],
 };
 
@@ -40,6 +41,41 @@ test('미등록 자료는 담당자가 올려야 보인다', () => {
 
   p.delivered.push('missing-one');
   assert.equal(view.recordState('missing-one'), RECORD.OPEN);
+});
+
+test('DB에 올라올 일이 없는 자료는 숨는다', () => {
+  const { view } = setup();
+  assert.equal(view.recordState('held-one'), RECORD.HIDDEN);
+});
+
+test('구두로 받아도 DB에는 나타나지 않는다', () => {
+  const { view, p } = setup();
+  p.delivered.push('held-one');
+  assert.equal(view.recordState('held-one'), RECORD.HIDDEN, '수령 기록은 남지만 등록된 것이 아니다');
+  assert.equal(view.recordBody('held-one'), null);
+});
+
+test('목록에는 숨은 자료가 빠진다', () => {
+  const { view, p } = setup();
+  assert.deepEqual(view.visibleRecordIds(), ['open-one', 'locked-one', 'missing-one'], '콘텐츠 순서 그대로');
+
+  p.delivered.push('held-one');
+  assert.deepEqual(
+    view.visibleRecordIds(),
+    ['open-one', 'locked-one', 'missing-one'],
+    '구두로 받아도 목록에 생기지 않는다'
+  );
+});
+
+test('목록은 진행에 따라 늘거나 줄지 않는다', () => {
+  const { view, p } = setup();
+  const before = view.visibleRecordIds();
+
+  p.requested.push('locked-one');
+  p.unlocked.push('locked-one');
+  p.delivered.push('missing-one');
+
+  assert.deepEqual(view.visibleRecordIds(), before, '상태만 바뀌고 목록은 그대로다');
 });
 
 test('열리기 전에는 본문을 주지 않는다', () => {

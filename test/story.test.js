@@ -8,8 +8,9 @@ const STORY = {
     burns: 'k',
     triggers: ['해커', '외국인 친구'],
     traceable: [
-      { form: '1187-basic', field: 'reporter' },
-      { form: '1187-basic', field: 'plate' },
+      { form: '1187-basic', field: 'reporter', record: '1187-report-log' },
+      { form: '1187-basic', field: 'plate', record: '1187-cctv-read' },
+      { form: '1187-basic', field: 'legacy' },   // record가 아직 안 붙은 항목
     ],
     providedBy: 'kang',
     providedMarkers: ['02:47', '서동철'],
@@ -57,20 +58,52 @@ test('제공자의 메시지에서만 수령을 인정한다', () => {
 
 test('받지 않고 채우면 들킨다', () => {
   const r = rules();
-  assert.equal(r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, false), true);
-  assert.equal(r.leaksInReport('1187-basic', { plate: '34가 12XX' }, false), true);
+  assert.equal(r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, []), true);
+  assert.equal(r.leaksInReport('1187-basic', { plate: '34가 12XX' }, []), true);
 });
 
-test('받았으면 채워도 안 들킨다', () => {
+test('받은 자료는 채워도 안 들킨다', () => {
   const r = rules();
-  assert.equal(r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, true), false);
+  assert.equal(
+    r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, ['1187-report-log']),
+    false
+  );
+});
+
+test('받은 자료와 채운 칸이 다르면 들킨다', () => {
+  const r = rules();
+  assert.equal(
+    r.leaksInReport('1187-basic', { plate: '34가 12XX' }, ['1187-report-log']),
+    true,
+    '원부는 받았지만 판독 결과는 안 받았다'
+  );
+  assert.equal(
+    r.leaksInReport(
+      '1187-basic',
+      { reporter: '서동철 02:47', plate: '34가 12XX' },
+      ['1187-report-log']
+    ),
+    true,
+    '하나만 받고 둘을 채웠다'
+  );
+});
+
+test('record가 없는 항목은 옛 전역 판정으로 떨어진다', () => {
+  const r = rules();
+  assert.equal(r.leaksInReport('1187-basic', { legacy: '값' }, [], false), true);
+  assert.equal(r.leaksInReport('1187-basic', { legacy: '값' }, [], true), false);
+  assert.equal(
+    r.leaksInReport('1187-basic', { legacy: '값', plate: '34가 12XX' }, [], true),
+    true,
+    '전역이 참이어도 record가 붙은 항목은 따로 본다'
+  );
 });
 
 test('추적 대상 아닌 항목은 무관', () => {
   const r = rules();
-  assert.equal(r.leaksInReport('1187-basic', { location: '강변로3길 27' }, false), false);
-  assert.equal(r.leaksInReport('1187-basic', { reporter: '   ' }, false), false);
-  assert.equal(r.leaksInReport('1204-compare', { reporter: '서동철' }, false), false);
+  assert.equal(r.leaksInReport('1187-basic', { location: '강변로3길 27' }, []), false);
+  assert.equal(r.leaksInReport('1187-basic', { reporter: '   ' }, []), false);
+  assert.equal(r.leaksInReport('1204-compare', { reporter: '서동철' }, []), false);
 });
 
 test('추궁 대사는 경로에 따라 다르다', () => {

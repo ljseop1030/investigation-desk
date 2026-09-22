@@ -45,13 +45,19 @@ const CONTENT = {
   records: [
     { id: '1187-victim', access: ACCESS.RESTRICTED },
     { id: '1187-forensic', access: ACCESS.UNREGISTERED, provider: 'yoo' },
+    { id: '1204-print', access: ACCESS.UNREGISTERED, provider: 'kim' },
+    { id: '1187-report-log', access: ACCESS.NONE, provider: 'kang' },
+    { id: '1187-cctv-read', access: ACCESS.NONE, provider: 'kang' },
   ],
   forms: [{ id: '1187-basic', fields: [{ id: 'location', private: { keys: ['강변로3길', '27'] } }] }],
   story: {
     outsiderAppears: { who: 'k', afterIdleSec: 115, lines: ['안녕하세요.'], lineGapSec: [1, 2] },
     leak: {
       burns: 'k', triggers: ['해커'],
-      traceable: [{ form: '1187-basic', field: 'reporter' }],
+      traceable: [
+        { form: '1187-basic', field: 'reporter', record: '1187-report-log' },
+        { form: '1187-basic', field: 'plate', record: '1187-cctv-read' },
+      ],
       providedBy: 'kang', providedMarkers: ['02:47'],
       confront: {
         by: 'kang', delaySec: [26, 56], lineGapSec: [2, 4],
@@ -282,6 +288,36 @@ test('provider가 아니면 자료를 등록할 수 없다', async () => {
   assert.deepEqual(state.progress().delivered, []);
 });
 
+test('소관 자료를 등록하면 DB에 뜬다', async () => {
+  const { actions, state, view, events, run } = setup({
+    reply: async () => ({ messages: ['조회는 해뒀어요.'], delivers: ['1204-print'] }),
+  });
+  const registered = [];
+  events.on('record:registered', (e) => registered.push(e.recordId));
+
+  actions.send('kim', '1204 지문 대조 결과 주세요');
+  await run(700);
+
+  assert.deepEqual(state.progress().delivered, ['1204-print']);
+  assert.equal(view.recordState('1204-print'), 'open');
+  assert.deepEqual(registered, ['1204-print']);
+});
+
+test('말로만 주는 자료는 수령 기록만 남는다', async () => {
+  const { actions, state, view, events, run } = setup({
+    reply: async () => ({ messages: ['접수시각 02:47이에요~'], delivers: ['1187-report-log'] }),
+  });
+  const registered = [];
+  events.on('record:registered', (e) => registered.push(e.recordId));
+
+  actions.send('kang', '신고접수 원부 주세요');
+  await run(700);
+
+  assert.deepEqual(state.progress().delivered, ['1187-report-log'], '받은 것은 기록된다');
+  assert.equal(view.recordState('1187-report-log'), 'hidden', 'DB에는 나타나지 않는다');
+  assert.deepEqual(registered, [], '등록 알림도 뜨지 않는다');
+});
+
 test('양식은 제출 후 검토를 거쳐 채점된다', async () => {
   const { actions, state, run } = setup();
   actions.submitForm('1187-basic', { location: '강변로3길 27' });
@@ -308,6 +344,48 @@ test('발설하면 외부인이 사라지고 담당조사관이 찾아온다', a
   assert.equal(state.progress().story.outsider, 'burned');
   await run(30);
   assert.equal(seen.some((m) => m.text === '저기…'), true);
+});
+
+test('받지 않은 자료를 양식에 적으면 들킨다', async () => {
+  const { actions, state, seen, run } = setup({ idleSec: 115 });
+  await run(120);
+  assert.equal(state.progress().story.outsider, 'live');
+
+  actions.submitForm('1187-basic', { reporter: '서동철 02:47' });
+  assert.equal(state.progress().story.outsider, 'burned');
+  await run(30);
+  assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), true);
+});
+
+test('담당조사관에게 받고 적으면 안 들킨다', async () => {
+  const { actions, state, run } = setup({
+    idleSec: 115,
+    reply: async () => ({ messages: ['접수시각 02:47이에요~'], delivers: ['1187-report-log'] }),
+  });
+  await run(120);
+  actions.send('kang', '신고접수 원부 주세요');
+  await run(700);
+  assert.deepEqual(state.progress().delivered, ['1187-report-log']);
+
+  actions.submitForm('1187-basic', { reporter: '서동철 02:47' });
+  assert.equal(state.progress().story.outsider, 'live', '정식 경로로 받았다');
+});
+
+test('하나 받았다고 다른 칸까지 통과하지 않는다', async () => {
+  const { actions, state, seen, run } = setup({
+    idleSec: 115,
+    reply: async () => ({ messages: ['접수시각 02:47이에요~'], delivers: ['1187-report-log'] }),
+  });
+  await run(120);
+  actions.send('kang', '신고접수 원부 주세요');
+  await run(700);
+
+  // 원부는 받았지만 CCTV 판독은 안 받았다. 전역 불리언 하나로 보던 시절에는
+  // 여기서 통과했다.
+  actions.submitForm('1187-basic', { plate: '34가 12XX' });
+  assert.equal(state.progress().story.outsider, 'burned');
+  await run(30);
+  assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), true);
 });
 
 test('소각된 상대에게는 보낼 수 없다', async () => {
