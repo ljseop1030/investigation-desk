@@ -109,7 +109,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     // draft를 남긴다. 반려된 뒤 고쳐 쓸 값이 사라지면 안 된다.
     p().forms[formId] = { ...p().forms[formId], values, draft: values, status: 'review', marks: null };
 
-    if (story.leaksInReport(formId, values, p().story.provided)) burn('report');
+    if (story.leaksInReport(formId, values, p().delivered, p().story.provided)) burn('report');
 
     scheduler.add('grade', forms.reviewAt(now), { formId });
     events.emit('form:submitted', { formId });
@@ -196,7 +196,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
 
     let out;
     try {
-      out = await ai.reply(cid, log(cid), state.playerName());
+      out = await ai.reply(cid, log(cid), state.playerName());   // ← 3번째 인자 추가
     } catch { 
       const fb = c.fallback;
       out = { messages: [fb[Math.floor(Math.random() * fb.length)]] };

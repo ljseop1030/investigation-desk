@@ -36,18 +36,28 @@ export function createStoryRules(story, characters, opts = {}) {
       return leakRe.test(text);
     },
 
-    // 제공자가 실제로 알려줬는지. 문자열 검사라 헐겁다. TODO(P5+)
+    // 제공자가 실제로 알려줬는지. 문자열 검사라 헐겁다.
+    // traceable에 record가 붙은 항목은 더 이상 이걸 보지 않는다.
+    // 콘텐츠가 전부 넘어오면 걷어낸다. (PR3 c7)
     marksProvided(cid, text) {
       if (cid !== story.leak.providedBy) return false;
       return providedRe.test(text);
     },
 
     // (2) 양식에서 들킴. 정식 경로로만 얻는 항목을 받지 않고 채웠는가.
-    leaksInReport(formId, values = {}, provided) {
-      if (provided) return false;
-      return story.leak.traceable.some(
-        (t) => t.form === formId && (values[t.field] ?? '').trim() !== ''
-      );
+    //
+    // 항목마다 따로 본다. 전에는 '뭐라도 하나 받았으면 통과'였다. 강윤하에게
+    // CCTV 판독만 받고 신고자 칸을 채워도 안 걸렸다는 뜻이다. 어느 자료를
+    // 받았는지가 delivered에 남으므로 이제 칸과 자료를 짝지어 본다.
+    //
+    // record가 없는 항목은 옛 전역 불리언으로 떨어진다. 콘텐츠에 record 키가
+    // 붙는 회차까지만 사는 길이다.
+    leaksInReport(formId, values = {}, delivered = [], provided = false) {
+      return story.leak.traceable.some((t) => {
+        if (t.form !== formId) return false;
+        if ((values[t.field] ?? '').trim() === '') return false;
+        return t.record ? !delivered.includes(t.record) : !provided;
+      });
     },
 
     // 대사와 도착 간격은 콘텐츠에서 그대로 가져온다.
