@@ -62,6 +62,31 @@ test('받지 않고 채우면 들킨다', () => {
   assert.equal(r.leaksInReport('1187-basic', { plate: '34가 12XX' }, []), true);
 });
 
+test('틀리게 채우면 들키지 않는다', () => {
+  const r = rules();
+  assert.equal(
+    r.leaksInReport('1187-basic', { reporter: 'ㅁㄴㅇㄹ' }, [], false, ['reporter']),
+    false,
+    '반려당한 칸은 받지 않았다는 증거다'
+  );
+  assert.equal(
+    r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, [], false, ['plate']),
+    true,
+    '다른 칸이 틀린 것은 이 칸의 판정과 무관하다'
+  );
+  assert.equal(
+    r.leaksInReport(
+      '1187-basic',
+      { reporter: '서동철 02:47', plate: 'ㅁㄴㅇㄹ' },
+      [],
+      false,
+      ['plate']
+    ),
+    true,
+    '한 칸이 틀려도 맞은 칸이 남아 있으면 들킨다'
+  );
+});
+
 test('받은 자료는 채워도 안 들킨다', () => {
   const r = rules();
   assert.equal(
@@ -96,6 +121,11 @@ test('record가 없는 항목은 옛 전역 판정으로 떨어진다', () => {
     r.leaksInReport('1187-basic', { legacy: '값', plate: '34가 12XX' }, [], true),
     true,
     '전역이 참이어도 record가 붙은 항목은 따로 본다'
+  );
+  assert.equal(
+    r.leaksInReport('1187-basic', { legacy: '값' }, [], false, ['legacy']),
+    false,
+    '채점이 먼저다. 전역 판정까지 가지 않는다'
   );
 });
 
