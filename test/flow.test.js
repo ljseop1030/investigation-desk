@@ -49,7 +49,18 @@ const CONTENT = {
     { id: '1187-report-log', access: ACCESS.NONE, provider: 'kang' },
     { id: '1187-cctv-read', access: ACCESS.NONE, provider: 'kang' },
   ],
-  forms: [{ id: '1187-basic', fields: [{ id: 'location', private: { keys: ['강변로3길', '27'] } }] }],
+  // 발설 판정이 채점 결과를 읽으므로 추적 대상 칸도 채점 대상이어야 한다.
+  // 정답 키는 콘텐츠에서 그대로 가져왔다.
+  forms: [
+    {
+      id: '1187-basic',
+      fields: [
+        { id: 'location', private: { keys: ['강변로3길', '27'] } },
+        { id: 'reporter', private: { keys: ['서동철', '0247'], alts: [['서동철', '247']] } },
+        { id: 'plate', private: { keys: ['34', '12', 'xx'], alts: [['34', '12', '○']] } },
+      ],
+    },
+  ],
   story: {
     outsiderAppears: { who: 'k', afterIdleSec: 115, lines: ['안녕하세요.'], lineGapSec: [1, 2] },
     leak: {
@@ -320,7 +331,11 @@ test('말로만 주는 자료는 수령 기록만 남는다', async () => {
 
 test('양식은 제출 후 검토를 거쳐 채점된다', async () => {
   const { actions, state, run } = setup();
-  actions.submitForm('1187-basic', { location: '강변로3길 27' });
+  actions.submitForm('1187-basic', {
+    location: '강변로3길 27',
+    reporter: '서동철 02:47',
+    plate: '34가 12XX',
+  });
   assert.equal(state.progress().forms['1187-basic'].status, 'review');
   await run(26);
   const f = state.progress().forms['1187-basic'];
@@ -352,8 +367,29 @@ test('받지 않은 자료를 양식에 적으면 들킨다', async () => {
   assert.equal(state.progress().story.outsider, 'live');
 
   actions.submitForm('1187-basic', { reporter: '서동철 02:47' });
+  assert.equal(state.progress().story.outsider, 'live', '검토가 끝나기 전에는 아직이다');
+  await run(30);
   assert.equal(state.progress().story.outsider, 'burned');
   await run(30);
+  assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), true);
+});
+
+test('틀리게 적어 반려당하면 들키지 않는다', async () => {
+  const { actions, state, seen, run } = setup({ idleSec: 115 });
+  await run(120);
+  assert.equal(state.progress().story.outsider, 'live');
+
+  // 받지 않았으니 못 적는다. 아무 글자나 적은 것은 발설이 아니라 그 증거다.
+  actions.submitForm('1187-basic', { reporter: 'ㅁㄴㅇㄹ' });
+  await run(60);
+  assert.equal(state.progress().forms['1187-basic'].marks.pass, false, '반려당했다');
+  assert.equal(state.progress().story.outsider, 'live');
+  assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), false);
+
+  // 고쳐서 정확히 내면 그 회차에 걸린다.
+  actions.submitForm('1187-basic', { reporter: '서동철 02:47' });
+  await run(60);
+  assert.equal(state.progress().story.outsider, 'burned');
   assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), true);
 });
 
@@ -368,6 +404,8 @@ test('담당조사관에게 받고 적으면 안 들킨다', async () => {
   assert.deepEqual(state.progress().delivered, ['1187-report-log']);
 
   actions.submitForm('1187-basic', { reporter: '서동철 02:47' });
+  await run(30);
+  assert.equal(state.progress().forms['1187-basic'].marks.bad.includes('reporter'), false);
   assert.equal(state.progress().story.outsider, 'live', '정식 경로로 받았다');
 });
 
@@ -383,6 +421,7 @@ test('하나 받았다고 다른 칸까지 통과하지 않는다', async () => 
   // 원부는 받았지만 CCTV 판독은 안 받았다. 전역 불리언 하나로 보던 시절에는
   // 여기서 통과했다.
   actions.submitForm('1187-basic', { plate: '34가 12XX' });
+  await run(30);
   assert.equal(state.progress().story.outsider, 'burned');
   await run(30);
   assert.equal(seen.some((m) => m.text === '보고서 봤어요~'), true);

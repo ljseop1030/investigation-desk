@@ -50,12 +50,20 @@ export function createStoryRules(story, characters, opts = {}) {
     // CCTV 판독만 받고 신고자 칸을 채워도 안 걸렸다는 뜻이다. 어느 자료를
     // 받았는지가 delivered에 남으므로 이제 칸과 자료를 짝지어 본다.
     //
+    // bad는 채점에서 틀린 칸이다. 틀린 답은 발설이 아니다 — 받지 않았으니
+    // 못 쓴 것이고, 그게 바로 안 받았다는 증거다. 아무 글자나 적어 반려당해도
+    // 소각되던 것이 이 줄로 막힌다. 그래서 이 판정은 채점 뒤에 서야 한다.
+    //
+    // 빈칸 검사는 남는다. 정답 키가 없는 필드는 forms.grade가 채점하지 않고
+    // 넘기므로(bad에 안 들어온다) 빈칸이 '맞은 칸'으로 읽힌다.
+    //
     // record가 없는 항목은 옛 전역 불리언으로 떨어진다. 콘텐츠에 record 키가
     // 붙는 회차까지만 사는 길이다.
-    leaksInReport(formId, values = {}, delivered = [], provided = false) {
+    leaksInReport(formId, values = {}, delivered = [], provided = false, bad = []) {
       return story.leak.traceable.some((t) => {
         if (t.form !== formId) return false;
         if ((values[t.field] ?? '').trim() === '') return false;
+        if (bad.includes(t.field)) return false;
         return t.record ? !delivered.includes(t.record) : !provided;
       });
     },

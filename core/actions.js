@@ -109,8 +109,6 @@ export function createActions({ content, state, scheduler, events, rules, clock,
     // draft를 남긴다. 반려된 뒤 고쳐 쓸 값이 사라지면 안 된다.
     p().forms[formId] = { ...p().forms[formId], values, draft: values, status: 'review', marks: null };
 
-    if (story.leaksInReport(formId, values, p().delivered, p().story.provided)) burn('report');
-
     scheduler.add('grade', forms.reviewAt(now), { formId });
     events.emit('form:submitted', { formId });
   }
@@ -166,12 +164,21 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       events.emit('record:unlocked', { recordId: e.recordId });
     },
 
+    // 채점과 발설 판정이 같은 자리에 있다. 
+    // 반려된 뒤 고쳐 내면 이 핸들러가 다시 돌아 그 회차에 판정된다.
+    // 정확히 적은 순간에 걸린다는 뜻이고, 그게 원래 의도였다.
+    // graded를 먼저 쏜다.
     grade(e) {
       const form = formById.get(e.formId);
       const entry = p().forms[e.formId];
       entry.marks = forms.grade(form, entry.values);
       entry.status = 'done';
       events.emit('form:graded', { formId: e.formId, ...entry.marks });
+
+      const leaked = story.leaksInReport(
+        e.formId, entry.values, p().delivered, p().story.provided, entry.marks.bad
+      );
+      if (leaked) burn('report');
     },
 
     reply(e) { void replyTurn(e.cid); },
