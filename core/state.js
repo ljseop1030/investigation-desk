@@ -1,7 +1,14 @@
 // 진행(progress)과 화면(screen)을 같은 레벨에 두지 않는다.
 // P10에서 진행만 서버로 간다. 창 위치는 그 대상이 아니다.
 
-export const SAVE_VERSION = 1;
+// 2로 올려 옛 세이브를 버린다. 발설 판정이 전역 불리언(story.provided)에서
+// 자료 단위 수령 기록(delivered)으로 바뀌었고, 옛 세이브에는 delivered가
+// 비어 있다. 그대로 이어 쓰면 이미 받은 자료가 미수령으로 읽혀 양식을 내는
+// 순간 억울하게 소각된다.
+//
+// 마이그레이션은 불가능하다. 옛 provided는 불리언이라 어느 자료를 받았는지
+// 모른다. 전부 넣는 것 말고 방법이 없고, 그러면 안 받은 것도 받은 것이 된다.
+export const SAVE_VERSION = 2;
 
 const empty = () => ({
   v: SAVE_VERSION,
@@ -17,7 +24,7 @@ const empty = () => ({
     unlocked: [],
     delivered: [],
     forms: {},        // { [formId]: { values, draft, status, marks } }
-    story: { outsider: 'hidden', provided: false, greeted: false },
+    story: { outsider: 'hidden', greeted: false },
     lastActAt: 0,
     noticesSent: [],  // 이미 도착한 공지 인덱스
   },
