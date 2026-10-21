@@ -10,10 +10,7 @@ const STORY = {
     traceable: [
       { form: '1187-basic', field: 'reporter', record: '1187-report-log' },
       { form: '1187-basic', field: 'plate', record: '1187-cctv-read' },
-      { form: '1187-basic', field: 'legacy' },   // record가 아직 안 붙은 항목
     ],
-    providedBy: 'kang',
-    providedMarkers: ['02:47', '서동철'],
     confront: {
       by: 'kang', delaySec: [26, 56], lineGapSec: [2.2, 4.8],
       byMessage: ['m1', 'm2'], byReport: ['r1', 'r2'],
@@ -49,13 +46,6 @@ test('소각 대상 본인과의 대화는 판정하지 않는다', () => {
   assert.equal(r.leaksInMessage('k', 'K씨 해커예요?'), false);
 });
 
-test('제공자의 메시지에서만 수령을 인정한다', () => {
-  const r = rules();
-  assert.equal(r.marksProvided('kang', '접수시각 02:47이에요~'), true);
-  assert.equal(r.marksProvided('kim', '접수시각 02:47입니다'), false);
-  assert.equal(r.marksProvided('kang', '지금 밖이라서요ㅠ'), false);
-});
-
 test('받지 않고 채우면 들킨다', () => {
   const r = rules();
   assert.equal(r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, []), true);
@@ -65,12 +55,12 @@ test('받지 않고 채우면 들킨다', () => {
 test('틀리게 채우면 들키지 않는다', () => {
   const r = rules();
   assert.equal(
-    r.leaksInReport('1187-basic', { reporter: 'ㅁㄴㅇㄹ' }, [], false, ['reporter']),
+    r.leaksInReport('1187-basic', { reporter: 'ㅁㄴㅇㄹ' }, [], ['reporter']),
     false,
     '반려당한 칸은 받지 않았다는 증거다'
   );
   assert.equal(
-    r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, [], false, ['plate']),
+    r.leaksInReport('1187-basic', { reporter: '서동철 02:47' }, [], ['plate']),
     true,
     '다른 칸이 틀린 것은 이 칸의 판정과 무관하다'
   );
@@ -79,7 +69,6 @@ test('틀리게 채우면 들키지 않는다', () => {
       '1187-basic',
       { reporter: '서동철 02:47', plate: 'ㅁㄴㅇㄹ' },
       [],
-      false,
       ['plate']
     ),
     true,
@@ -113,20 +102,15 @@ test('받은 자료와 채운 칸이 다르면 들킨다', () => {
   );
 });
 
-test('record가 없는 항목은 옛 전역 판정으로 떨어진다', () => {
-  const r = rules();
-  assert.equal(r.leaksInReport('1187-basic', { legacy: '값' }, [], false), true);
-  assert.equal(r.leaksInReport('1187-basic', { legacy: '값' }, [], true), false);
-  assert.equal(
-    r.leaksInReport('1187-basic', { legacy: '값', plate: '34가 12XX' }, [], true),
-    true,
-    '전역이 참이어도 record가 붙은 항목은 따로 본다'
-  );
-  assert.equal(
-    r.leaksInReport('1187-basic', { legacy: '값' }, [], false, ['legacy']),
-    false,
-    '채점이 먼저다. 전역 판정까지 가지 않는다'
-  );
+// 옛 전역 불리언 경로가 사라졌으므로 record 없는 항목은 판정할 근거가 없다.
+// 조용히 넘기면 delivered.includes(undefined)가 false가 되어, 그 칸은 무엇을
+// 적어도 발설로 읽힌다. 콘텐츠 한 줄이 억울한 소각을 만드는 모양이다.
+test('traceable에 record가 없으면 만들 때 터진다', () => {
+  const broken = {
+    ...STORY,
+    leak: { ...STORY.leak, traceable: [{ form: '1187-basic', field: 'legacy' }] },
+  };
+  assert.throws(() => createStoryRules(broken, CHARS), /traceable에 record 없음/);
 });
 
 test('추적 대상 아닌 항목은 무관', () => {

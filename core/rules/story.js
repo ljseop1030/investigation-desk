@@ -22,7 +22,13 @@ export function createStoryRules(story, characters, opts = {}) {
     [namePattern(burnName), ...story.leak.triggers.map(escape)].join('|'),
     'i'
   );
-  const providedRe = new RegExp(story.leak.providedMarkers.map(escape).join('|'), 'i');
+  // 항목마다 어느 자료를 받았어야 하는지가 콘텐츠에 적혀 있어야 한다. 옛
+  // 전역 불리언 경로를 걷어냈으므로, record가 없는 항목은 판정할 근거가 없다.
+  // 조용히 넘기면 delivered.includes(undefined)가 false가 되어 그 칸은 무엇을
+  // 적어도 발설로 읽힌다. 억울한 소각이 콘텐츠 한 줄 때문에 생기는 것이라
+  // 여기서 멈춘다.
+  const unwired = story.leak.traceable.filter((t) => !t.record).map((t) => `${t.form}.${t.field}`);
+  if (unwired.length) throw new Error(`traceable에 record 없음: ${unwired.join(', ')}`);
 
   return {
     // 아무것도 안 하고 있으면 외부인이 먼저 말을 건다.
@@ -34,14 +40,6 @@ export function createStoryRules(story, characters, opts = {}) {
     leaksInMessage(cid, text) {
       if (cid === burnId) return false;
       return leakRe.test(text);
-    },
-
-    // 제공자가 실제로 알려줬는지. 문자열 검사라 헐겁다.
-    // traceable에 record가 붙은 항목은 더 이상 이걸 보지 않는다.
-    // 콘텐츠가 전부 넘어오면 걷어낸다. (PR3 c7)
-    marksProvided(cid, text) {
-      if (cid !== story.leak.providedBy) return false;
-      return providedRe.test(text);
     },
 
     // (2) 양식에서 들킴. 정식 경로로만 얻는 항목을 받지 않고 채웠는가.
@@ -56,15 +54,12 @@ export function createStoryRules(story, characters, opts = {}) {
     //
     // 빈칸 검사는 남는다. 정답 키가 없는 필드는 forms.grade가 채점하지 않고
     // 넘기므로(bad에 안 들어온다) 빈칸이 '맞은 칸'으로 읽힌다.
-    //
-    // record가 없는 항목은 옛 전역 불리언으로 떨어진다. 콘텐츠에 record 키가
-    // 붙는 회차까지만 사는 길이다.
-    leaksInReport(formId, values = {}, delivered = [], provided = false, bad = []) {
+    leaksInReport(formId, values = {}, delivered = [], bad = []) {
       return story.leak.traceable.some((t) => {
         if (t.form !== formId) return false;
         if ((values[t.field] ?? '').trim() === '') return false;
         if (bad.includes(t.field)) return false;
-        return t.record ? !delivered.includes(t.record) : !provided;
+        return !delivered.includes(t.record);
       });
     },
 

@@ -18,6 +18,12 @@ const ROOT = 'content';
 // 브라우저가 읽는다. 정적 import라 없으면 빌드가 터지지만,
 // 터지기 전에 이름을 알려주는 게 낫다.
 const CLIENT_FILES = [
+  // 사건 손목록. 클라이언트 로더·서버 prompt.js·아래 CASE_FILES가 함께 읽는다.
+  // 빠지면 양쪽이 같이 죽는다.
+  'cases/index.js',
+  // 콘텐츠가 적을 때 쓰는 어휘. shared/enums.js를 import하지 않고 값만 베껴
+  // 둔 파일이라, 빠지면 records.js와 characters/*.js가 한꺼번에 못 읽힌다.
+  'enums.js',
   'notices.js',
   'story.js',
   'screen/apps.js',
@@ -30,7 +36,10 @@ const CLIENT_FILES = [
 // functions/api/chat.js가 읽는다. 클라이언트에는 이것들을 가리키는 줄이 한
 // 줄도 없고(그게 persona를 번들에서 막는 방법이다), 그래서 빠져도 빌드가
 // 성공한다. 여기서 안 보면 아무 데서도 안 본다.
-const SERVER_FILES = ['prompt.js', 'personas/index.js'];
+// records.private.js는 구두 전달 자료의 본문이다. 클라이언트 번들에 들어가지
+// 않게 레코드에서 갈라뒀으므로, 빠져도 vite build가 성공한다. prompt.js가
+// 조립할 때 던지고, 그때는 모든 캐릭터가 폴백으로 돈다.
+const SERVER_FILES = ['prompt.js', 'personas/index.js', 'records.private.js'];
 
 // 사건 폴더마다 있어야 하는 것
 const CASE_FILES = ['case.js', 'polnet.js', 'records.js', 'form.js'];

@@ -69,7 +69,6 @@ const CONTENT = {
         { form: '1187-basic', field: 'reporter', record: '1187-report-log' },
         { form: '1187-basic', field: 'plate', record: '1187-cctv-read' },
       ],
-      providedBy: 'kang', providedMarkers: ['02:47'],
       confront: {
         by: 'kang', delaySec: [26, 56], lineGapSec: [2, 4],
         byMessage: ['저기…'], byReport: ['보고서 봤어요~'],

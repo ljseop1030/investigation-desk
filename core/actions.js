@@ -149,7 +149,6 @@ export function createActions({ content, state, scheduler, events, rules, clock,
 
     push(e) {
       log(e.cid).push({ me: false, text: e.text, at: e.at });
-      if (story.marksProvided(e.cid, e.text)) p().story.provided = true;
       events.emit('message', { cid: e.cid, me: false, text: e.text, at: e.at, last: e.last });
     },
 
@@ -176,7 +175,7 @@ export function createActions({ content, state, scheduler, events, rules, clock,
       events.emit('form:graded', { formId: e.formId, ...entry.marks });
 
       const leaked = story.leaksInReport(
-        e.formId, entry.values, p().delivered, p().story.provided, entry.marks.bad
+        e.formId, entry.values, p().delivered, entry.marks.bad
       );
       if (leaked) burn('report');
     },
